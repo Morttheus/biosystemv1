@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Estilos de Impressão para Relatórios */
+@media print {
+  /* Esconde elementos não necessários na impressão */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Remove backgrounds escuros */
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Ajusta o container principal */
+  .min-h-screen {
+    min-height: auto !important;
+    background: white !important;
+  }
+
+  /* Remove gradientes do header na impressão */
+  .bg-gradient-to-br,
+  .bg-gradient-to-r {
+    background: white !important;
+  }
+
+  /* Mantém cores de destaque */
+  .bg-blue-100, .bg-green-100, .bg-purple-100, .bg-orange-100,
+  .bg-red-100, .bg-blue-50, .bg-green-50, .bg-purple-50, .bg-orange-50 {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Ajusta tamanho do texto */
+  .text-2xl {
+    font-size: 18px !important;
+  }
+
+  .text-xl {
+    font-size: 16px !important;
+  }
+
+  /* Remove shadows na impressão */
+  .shadow, .shadow-lg, .shadow-md {
+    box-shadow: none !important;
+  }
+
+  /* Ajusta espaçamentos */
+  .print\:space-y-4 > * + * {
+    margin-top: 1rem !important;
+  }
+
+  .print\:mb-4 {
+    margin-bottom: 1rem !important;
+  }
+
+  /* Garante que tabelas não quebrem no meio */
+  table {
+    page-break-inside: avoid;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+
+  /* Cards do relatório */
+  .bg-white {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  /* Texto em preto para melhor legibilidade */
+  .text-gray-800, .text-gray-700, .text-gray-600 {
+    color: #1f2937 !important;
+  }
+
+  /* Título do relatório */
+  #relatorio-print h2 {
+    color: #1f2937 !important;
+    font-weight: bold !important;
+  }
+
+  /* Esconde header e navegação */
+  nav, header, .bg-slate-800, .bg-slate-900 {
+    display: none !important;
+  }
+
+  /* Mostra apenas o conteúdo do relatório */
+  #relatorio-print {
+    display: block !important;
+  }
+}
