@@ -93,6 +93,7 @@ const MasterScreen = () => {
     { value: 'admin', label: 'Administrador de Clínica' },
     { value: 'usuario', label: 'Recepcionista' },
     { value: 'medico', label: 'Médico' },
+    { value: 'painel', label: 'Painel TV (Sala de Espera)' },
   ];
 
   // Handlers de Clínicas
