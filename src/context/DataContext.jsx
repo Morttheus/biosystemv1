@@ -1,6 +1,8 @@
 // src/context/DataContext.jsx
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import apiService from '../services/api';
+import { toast } from 'react-toastify';
 
 const DataContext = createContext();
 
@@ -39,11 +41,41 @@ export const DataProvider = ({ children }) => {
     { id: 7, nome: 'OCT - Tomografia de Coerência Óptica', valor: 350.00, duracao: 20, ativo: true },
   ]);
 
-  // Pacientes (com prontuário eletrônico integrado)
+  // Pacientes (agora vêm da API)
   const [pacientes, setPacientes] = useState([]);
-
-  // Prontuários (histórico de consultas)
   const [prontuarios, setProntuarios] = useState([]);
+
+  // Carregar pacientes e prontuários
+  const carregarPacientes = async () => {
+    try {
+      const clinicaId = usuarioLogado?.clinica_id;
+      const lista = await apiService.listarPacientes(clinicaId);
+      setPacientes(lista);
+    } catch (err) {
+      console.error('Erro ao carregar pacientes:', err);
+      toast.error('Erro ao carregar pacientes');
+    }
+  };
+
+  const carregarProntuarios = async () => {
+    try {
+      const clinicaId = usuarioLogado?.clinica_id;
+      const lista = await apiService.listarProntuarios(null, clinicaId);
+      setProntuarios(lista);
+    } catch (err) {
+      console.error('Erro ao carregar prontuários:', err);
+      toast.error('Erro ao carregar prontuários');
+    }
+  };
+
+  // Carregar pacientes ao montar o componente
+  useEffect(() => {
+    if (usuarioLogado) {
+      carregarPacientes();
+      carregarProntuarios();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuarioLogado]);
 
   // Fila de atendimento
   const [filaAtendimento, setFilaAtendimento] = useState([]);
@@ -115,36 +147,51 @@ export const DataProvider = ({ children }) => {
   };
 
   // ============ FUNÇÕES DE PACIENTES ============
-  const buscarPacientePorCPF = (cpf) => {
-    const cpfLimpo = cpf.replace(/\D/g, '');
-    return pacientes.find(p => p.cpf.replace(/\D/g, '') === cpfLimpo);
-  };
-
-  const cadastrarPaciente = (dadosPaciente) => {
-    const cpfLimpo = dadosPaciente.cpf.replace(/\D/g, '');
-
-    // Verifica se já existe paciente com esse CPF
-    const pacienteExistente = buscarPacientePorCPF(cpfLimpo);
-    if (pacienteExistente) {
-      return { success: false, error: 'Paciente já cadastrado com este CPF', paciente: pacienteExistente };
+  const buscarPacientePorCPF = async (cpf) => {
+    try {
+      const paciente = await apiService.buscarPacienteCPF(cpf);
+      return paciente;
+    } catch (err) {
+      return null;
     }
-
-    const novoPaciente = {
-      ...dadosPaciente,
-      id: Date.now(),
-      cpf: cpfLimpo,
-      clinicaId: getClinicaIdUsuario(), // Vincula paciente à clínica do usuário
-      dataCadastro: new Date().toISOString(),
-      prontuarioId: `PRONT-${Date.now()}`,
-      historicoConsultas: [],
-    };
-
-    setPacientes(prev => [...prev, novoPaciente]);
-    return { success: true, paciente: novoPaciente };
   };
 
-  const atualizarPaciente = (id, dados) => {
-    setPacientes(prev => prev.map(p => p.id === id ? { ...p, ...dados } : p));
+  const cadastrarPaciente = async (dadosPaciente) => {
+    try {
+      const clinicaId = usuarioLogado?.clinica_id || 1;
+      const resultado = await apiService.criarPaciente({
+        ...dadosPaciente,
+        clinica_id: clinicaId,
+      });
+
+      if (resultado.paciente) {
+        setPacientes(prev => [...prev, resultado.paciente]);
+        toast.success('Paciente cadastrado com sucesso!');
+        return { success: true, paciente: resultado.paciente };
+      }
+
+      throw new Error(resultado.error || 'Erro ao cadastrar paciente');
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao cadastrar paciente';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
+  };
+
+  const atualizarPaciente = async (id, dados) => {
+    try {
+      const resultado = await apiService.atualizarPaciente(id, dados);
+      
+      if (resultado.paciente) {
+        setPacientes(prev => prev.map(p => p.id === id ? resultado.paciente : p));
+        toast.success('Paciente atualizado com sucesso!');
+      }
+      
+      return resultado;
+    } catch (err) {
+      toast.error('Erro ao atualizar paciente');
+      throw err;
+    }
   };
 
   // ============ FUNÇÕES DE FILA DE ATENDIMENTO ============
@@ -236,20 +283,67 @@ export const DataProvider = ({ children }) => {
 
   // ============ FUNÇÕES DE PRONTUÁRIO ============
   const obterProntuarioPaciente = (pacienteId) => {
-    return prontuarios.filter(p => p.pacienteId === pacienteId).sort((a, b) =>
-      new Date(b.data) - new Date(a.data)
-    );
+    return prontuarios
+      .filter(p => p.paciente_id === pacienteId)
+      .sort((a, b) => new Date(b.data_consulta) - new Date(a.data_consulta));
   };
 
   const obterTodosProntuarios = () => {
-    return prontuarios.map(p => {
-      const paciente = pacientes.find(pac => pac.id === p.pacienteId);
-      return {
-        ...p,
-        pacienteNome: paciente?.nome,
-        pacienteCPF: paciente?.cpf,
-      };
-    }).sort((a, b) => new Date(b.data) - new Date(a.data));
+    return prontuarios.sort((a, b) => new Date(b.data_consulta) - new Date(a.data_consulta));
+  };
+
+  const criarProntuario = async (dados) => {
+    try {
+      const clinicaId = usuarioLogado?.clinica_id || 1;
+      const resultado = await apiService.criarProntuario({
+        ...dados,
+        clinica_id: clinicaId,
+      });
+
+      if (resultado.prontuario) {
+        setProntuarios(prev => [...prev, resultado.prontuario]);
+        toast.success('Prontuário criado com sucesso!');
+        return { success: true, prontuario: resultado.prontuario };
+      }
+
+      throw new Error(resultado.error || 'Erro ao criar prontuário');
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao criar prontuário';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
+  };
+
+  const atualizarProntuario = async (id, dados) => {
+    try {
+      const resultado = await apiService.atualizarProntuario(id, dados);
+      
+      if (resultado.prontuario) {
+        setProntuarios(prev => prev.map(p => p.id === id ? resultado.prontuario : p));
+        toast.success('Prontuário atualizado com sucesso!');
+      }
+      
+      return resultado;
+    } catch (err) {
+      toast.error('Erro ao atualizar prontuário');
+      throw err;
+    }
+  };
+
+  const deletarProntuario = async (id) => {
+    try {
+      const resultado = await apiService.deletarProntuario(id);
+      
+      if (resultado.message) {
+        setProntuarios(prev => prev.filter(p => p.id !== id));
+        toast.success('Prontuário deletado com sucesso!');
+      }
+      
+      return resultado;
+    } catch (err) {
+      toast.error('Erro ao deletar prontuário');
+      throw err;
+    }
   };
 
   // ============ FUNÇÕES DE CHAMADAS DE PACIENTES ============
@@ -363,6 +457,9 @@ export const DataProvider = ({ children }) => {
     // Funções de Prontuário
     obterProntuarioPaciente,
     obterTodosProntuarios,
+    criarProntuario,
+    atualizarProntuario,
+    deletarProntuario,
 
     // Funções de Chamadas
     registrarChamada,

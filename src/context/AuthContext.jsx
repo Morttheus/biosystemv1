@@ -1,103 +1,69 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import apiService from '../services/api';
+import { toast } from 'react-toastify';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  // Usuários do sistema (em produção, isso viria de um banco de dados)
-  const [usuarios, setUsuarios] = useState([
-    {
-      id: 1,
-      nome: 'Administrador Master',
-      email: 'master@biosystem.com',
-      senha: '123456',
-      tipo: 'master',
-      clinicaId: null // Master tem acesso a todas as clínicas
-    },
-    {
-      id: 2,
-      nome: 'Admin Clínica Centro',
-      email: 'admin@biosystem.com',
-      senha: '123456',
-      tipo: 'admin',
-      clinicaId: 1 // Admin da clínica Centro
-    },
-    {
-      id: 3,
-      nome: 'Admin Clínica Sul',
-      email: 'adminsul@biosystem.com',
-      senha: '123456',
-      tipo: 'admin',
-      clinicaId: 2 // Admin da clínica Sul
-    },
-    {
-      id: 4,
-      nome: 'Recepcionista Ana',
-      email: 'usuario@biosystem.com',
-      senha: '123456',
-      tipo: 'usuario',
-      clinicaId: 1
-    },
-    {
-      id: 5,
-      nome: 'Recepcionista Paula',
-      email: 'paula@biosystem.com',
-      senha: '123456',
-      tipo: 'usuario',
-      clinicaId: 2
-    },
-    {
-      id: 6,
-      nome: 'Dr. Carlos Silva',
-      email: 'carlos@biosystem.com',
-      senha: '123456',
-      tipo: 'medico',
-      medicoId: 1,
-      clinicaId: 1
-    },
-    {
-      id: 7,
-      nome: 'Dra. Maria Santos',
-      email: 'maria@biosystem.com',
-      senha: '123456',
-      tipo: 'medico',
-      medicoId: 2,
-      clinicaId: 1
-    },
-    {
-      id: 8,
-      nome: 'Painel Clínica Centro',
-      email: 'painel@biosystem.com',
-      senha: '123456',
-      tipo: 'painel',
-      clinicaId: 1
-    },
-    {
-      id: 9,
-      nome: 'Painel Clínica Sul',
-      email: 'painelsul@biosystem.com',
-      senha: '123456',
-      tipo: 'painel',
-      clinicaId: 2
-    },
-  ]);
-
+  const [usuarios, setUsuarios] = useState([]);
   const [usuarioLogado, setUsuarioLogado] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState(null);
 
-  const login = (email, senha) => {
-    const usuario = usuarios.find(u => u.email === email && u.senha === senha);
+  // Carregar usuário logado ao iniciar
+  useEffect(() => {
+    const recuperarUsuario = async () => {
+      const token = apiService.getToken();
+      if (token) {
+        try {
+          const { usuario } = await apiService.verificarToken();
+          setUsuarioLogado(usuario);
+          carregarUsuarios();
+        } catch (err) {
+          apiService.clearToken();
+          setUsuarioLogado(null);
+        }
+      }
+      setCarregando(false);
+    };
 
-    if (usuario) {
-      const { senha: _, ...usuarioSemSenha } = usuario;
-      setUsuarioLogado(usuarioSemSenha);
-      return { success: true, usuario: usuarioSemSenha };
+    recuperarUsuario();
+  }, []);
+
+  const carregarUsuarios = async () => {
+    try {
+      const listaUsuarios = await apiService.listarUsuarios();
+      setUsuarios(listaUsuarios);
+    } catch (err) {
+      console.error('Erro ao carregar usuários:', err);
     }
-
-    return { success: false, error: 'Email ou senha incorretos' };
   };
 
-  const logout = () => {
+  const login = async (email, senha) => {
+    try {
+      setErro(null);
+      const resultado = await apiService.login(email, senha);
+      
+      if (resultado.usuario) {
+        setUsuarioLogado(resultado.usuario);
+        toast.success('Login realizado com sucesso!');
+        return { success: true, usuario: resultado.usuario };
+      }
+      
+      return { success: false, error: 'Erro ao fazer login' };
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao fazer login';
+      setErro(mensagem);
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
+  };
+
+  const logout = async () => {
+    await apiService.logout();
     setUsuarioLogado(null);
+    toast.success('Logout realizado');
   };
 
   const isAuthenticated = () => {
@@ -126,110 +92,84 @@ export const AuthProvider = ({ children }) => {
 
   // ============ FUNÇÕES DE GERENCIAMENTO DE USUÁRIOS ============
 
-  // Obtém usuários por clínica (admin só vê sua clínica, master vê todos)
   const obterUsuarios = (clinicaId = null) => {
     if (isMaster()) {
-      return usuarios.map(({ senha, ...u }) => u);
+      return usuarios;
     }
     if (clinicaId) {
-      return usuarios
-        .filter(u => u.clinicaId === clinicaId)
-        .map(({ senha, ...u }) => u);
+      return usuarios.filter(u => u.clinica_id === clinicaId);
     }
     return [];
   };
 
-  // Obtém todos os usuários (somente master)
   const obterTodosUsuarios = () => {
     if (!isMaster()) return [];
-    return usuarios.map(({ senha, ...u }) => u);
+    return usuarios;
   };
 
-  // Adicionar novo usuário
-  const adicionarUsuario = (dadosUsuario) => {
-    // Verifica se email já existe
-    const emailExiste = usuarios.some(u => u.email === dadosUsuario.email);
-    if (emailExiste) {
-      return { success: false, error: 'Email já cadastrado' };
-    }
-
-    // Admin só pode criar usuários para sua própria clínica
-    if (isAdmin() && dadosUsuario.clinicaId !== usuarioLogado.clinicaId) {
-      return { success: false, error: 'Você só pode criar usuários para sua clínica' };
-    }
-
-    // Admin não pode criar outros admins ou masters
-    if (isAdmin() && (dadosUsuario.tipo === 'admin' || dadosUsuario.tipo === 'master')) {
-      return { success: false, error: 'Você não tem permissão para criar este tipo de usuário' };
-    }
-
-    const novoUsuario = {
-      ...dadosUsuario,
-      id: Date.now(),
-    };
-
-    setUsuarios(prev => [...prev, novoUsuario]);
-    return { success: true, usuario: { ...novoUsuario, senha: undefined } };
-  };
-
-  // Editar usuário existente
-  const editarUsuario = (id, dados) => {
-    const usuario = usuarios.find(u => u.id === id);
-    if (!usuario) {
-      return { success: false, error: 'Usuário não encontrado' };
-    }
-
-    // Admin só pode editar usuários da sua clínica
-    if (isAdmin() && usuario.clinicaId !== usuarioLogado.clinicaId) {
-      return { success: false, error: 'Você só pode editar usuários da sua clínica' };
-    }
-
-    // Admin não pode promover para admin ou master
-    if (isAdmin() && (dados.tipo === 'admin' || dados.tipo === 'master')) {
-      return { success: false, error: 'Você não tem permissão para definir este tipo de usuário' };
-    }
-
-    // Verifica se novo email já existe (se estiver mudando)
-    if (dados.email && dados.email !== usuario.email) {
-      const emailExiste = usuarios.some(u => u.email === dados.email);
-      if (emailExiste) {
-        return { success: false, error: 'Email já cadastrado' };
+  const adicionarUsuario = async (dadosUsuario) => {
+    try {
+      const resultado = await apiService.criarUsuario(dadosUsuario);
+      
+      if (resultado.usuario) {
+        setUsuarios(prev => [...prev, resultado.usuario]);
+        toast.success('Usuário criado com sucesso!');
+        return { success: true, usuario: resultado.usuario };
       }
+      
+      throw new Error(resultado.error || 'Erro ao criar usuário');
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao criar usuário';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
     }
-
-    setUsuarios(prev => prev.map(u => u.id === id ? { ...u, ...dados } : u));
-    return { success: true };
   };
 
-  // Excluir usuário
-  const excluirUsuario = (id) => {
-    const usuario = usuarios.find(u => u.id === id);
-    if (!usuario) {
-      return { success: false, error: 'Usuário não encontrado' };
+  const editarUsuario = async (id, dados) => {
+    try {
+      const resultado = await apiService.atualizarUsuario(id, dados);
+      
+      if (resultado.usuario) {
+        setUsuarios(prev => prev.map(u => u.id === id ? resultado.usuario : u));
+        toast.success('Usuário atualizado com sucesso!');
+        return { success: true };
+      }
+      
+      throw new Error(resultado.error || 'Erro ao editar usuário');
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao editar usuário';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
     }
+  };
 
-    // Não pode excluir a si mesmo
-    if (usuarioLogado.id === id) {
-      return { success: false, error: 'Você não pode excluir seu próprio usuário' };
+  const excluirUsuario = async (id) => {
+    try {
+      if (usuarioLogado.id === id) {
+        throw new Error('Você não pode excluir seu próprio usuário');
+      }
+
+      const resultado = await apiService.deletarUsuario(id);
+      
+      if (resultado.message) {
+        setUsuarios(prev => prev.filter(u => u.id !== id));
+        toast.success('Usuário desativado com sucesso!');
+        return { success: true };
+      }
+      
+      throw new Error(resultado.error || 'Erro ao excluir usuário');
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao excluir usuário';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
     }
-
-    // Admin só pode excluir usuários da sua clínica
-    if (isAdmin() && usuario.clinicaId !== usuarioLogado.clinicaId) {
-      return { success: false, error: 'Você só pode excluir usuários da sua clínica' };
-    }
-
-    // Admin não pode excluir outros admins ou masters
-    if (isAdmin() && (usuario.tipo === 'admin' || usuario.tipo === 'master')) {
-      return { success: false, error: 'Você não tem permissão para excluir este tipo de usuário' };
-    }
-
-    setUsuarios(prev => prev.filter(u => u.id !== id));
-    return { success: true };
   };
 
   const value = {
     usuarioLogado,
-    usuarios: usuarios.map(({ senha, ...u }) => u), // Expõe usuários sem senha
+    usuarios,
+    carregando,
+    erro,
     login,
     logout,
     isAuthenticated,
@@ -238,7 +178,6 @@ export const AuthProvider = ({ children }) => {
     isUsuario,
     isMedico,
     isPainel,
-    // Funções de gerenciamento de usuários
     obterUsuarios,
     obterTodosUsuarios,
     adicionarUsuario,
