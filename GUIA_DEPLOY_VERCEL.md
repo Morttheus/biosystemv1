@@ -1,10 +1,88 @@
-# 🚀 GUIA PASSO A PASSO: DEPLOY NO VERCEL
+# 🚀 GUIA DEPLOY VERCEL - Resolvendo "Failed to fetch"
 
-## Pré-requisitos
-- Conta no [Vercel](https://vercel.com)
-- Git instalado
-- Node.js 18+ instalado
-- Repositório GitHub (recomendado)
+## ⚠️ PROBLEMA: "Failed to fetch" ao fazer login
+
+Seu frontend está em produção (Vercel) mas tenta conectar em `http://localhost:5000/api` que não existe lá.
+
+## ✅ SOLUÇÃO RÁPIDA (3 PASSOS)
+
+---
+
+## 🔧 PASSO 1: Configurar Variáveis de Ambiente
+
+No seu projeto Vercel:
+
+1. **Ir para Settings**
+   - Vercel Dashboard → Seu Projeto → Settings
+
+2. **Ir para Environment Variables**
+   - Settings → Environment Variables
+
+3. **Adicionar Nova Variável**
+   - Nome: `REACT_APP_API_URL`
+   - Valor: `http://localhost:5000/api` (desenvolvimento)
+   - OU: `https://seu-backend-railway.app/api` (produção)
+
+4. **Salvar**
+   - Clique "Save"
+   - Clique "Redeploy" para aplicar mudanças
+
+---
+
+## 🚀 PASSO 2: Deploy Backend em Railway
+
+### 2a. Criar Conta no Railway
+```
+https://railway.app → Sign up with GitHub
+```
+
+### 2b. Criar Novo Projeto
+1. **New Project**
+2. **Deploy from GitHub Repo**
+3. **Selecionar `biosystemv1`**
+4. **Railway detecta `biosystem-backend/`**
+5. **Aguardar deploy** (2-3 minutos)
+
+### 2c. Copiar URL do Backend
+1. Em Railway → Seu Projeto
+2. Procurar por **"Opening URL"** ou **"Domains"**
+3. URL será algo como: `https://biosystem-backend-xxx.railway.app`
+4. **Copiar essa URL**
+
+---
+
+## 🔗 PASSO 3: Atualizar Variável em Vercel
+
+1. **Voltar ao Vercel**
+   - Seu projeto → Settings → Environment Variables
+
+2. **Editar Variável REACT_APP_API_URL**
+   - Valor anterior: `http://localhost:5000/api`
+   - Novo valor: `https://seu-backend-railway.app/api`
+
+3. **Salvar e Redeploy**
+   - Clique "Save"
+   - Vercel Dashboard → Deployments → Redeploy
+
+4. **Aguardar Deploy**
+   - 2-3 minutos
+   - Quando ficar verde = pronto
+
+---
+
+## ✅ Testar Login
+
+1. **Abrir seu site no Vercel**
+   - `https://seu-projeto.vercel.app`
+
+2. **Fazer login**
+   - Email: `master@biosystem.com`
+   - Senha: `123456`
+
+3. **Se ainda der erro**
+   - Abrir F12 (DevTools) → Console
+   - Ver mensagem de erro exata
+   - Verificar se URL do backend está correta
 
 ---
 

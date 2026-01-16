@@ -43,6 +43,8 @@ class ApiService {
         options.body = JSON.stringify(data);
       }
 
+      console.log(`📡 [${method}] ${API_URL}${endpoint}`);
+
       const response = await fetch(`${API_URL}${endpoint}`, options);
 
       if (!response.ok) {
@@ -52,7 +54,13 @@ class ApiService {
 
       return await response.json();
     } catch (error) {
-      console.error('Erro na requisição:', error);
+      console.error('❌ Erro na requisição:', error);
+      
+      // Trata erro de conectividade
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        throw new Error(`Não conseguiu conectar ao servidor (${API_URL}). Verifique se o backend está rodando.`);
+      }
+      
       throw error;
     }
   }

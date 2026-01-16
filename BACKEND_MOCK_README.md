@@ -26,7 +26,7 @@
 
 | Email | Senha | Tipo | Telefone |
 |-------|-------|------|----------|
-| `master@biosystem.com` | `123456` | Master | (11) 98888-8888 |
+| `master@biosystem.com` | `123456` | Master | (98) 92002-5964 |
 | `admin@biosystem.com` | `123456` | Admin | (11) 97777-7777 |
 | `usuario@biosystem.com` | `123456` | Recepcionista | (11) 96666-6666 |
 | `carlos@biosystem.com` | `123456` | Médico | (11) 95555-5555 |

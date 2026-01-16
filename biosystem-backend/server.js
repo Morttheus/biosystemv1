@@ -25,9 +25,37 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+
+// CORS - Permitir múltiplos domínios
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  /\.vercel\.app$/,  // Qualquer app Vercel
+  /\.railway\.app$/, // Qualquer app Railway
+  process.env.FRONTEND_URL // Adicionar variável de ambiente se necessário
+].filter(Boolean);
+
 app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
+  origin: function(origin, callback) {
+    // Permitir requisições sem origin (mobile, curl, etc)
+    if (!origin) return callback(null, true);
+    
+    // Verificar se está na whitelist
+    if (allowedOrigins.some(allowed => {
+      if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return allowed === origin;
+    })) {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️ CORS bloqueado para: ${origin}`);
+      callback(new Error('CORS não permitido para esta origem'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Health Check
