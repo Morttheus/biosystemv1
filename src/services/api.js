@@ -79,6 +79,12 @@ class ApiService {
     }
   }
 
+  // ========== AUTENTICAÇÃO - ESQUECI SENHA ==========
+  async forgotPassword(contact) {
+    // contact: pode ser email ou telefone
+    return this.request('POST', '/auth/forgot-password', { contact });
+  }
+
   // ========== USUÁRIOS ==========
   async listarUsuarios(clinicaId = null) {
     const query = clinicaId ? `?clinica_id=${clinicaId}` : '';

@@ -62,7 +62,7 @@ const MasterScreen = () => {
   const [formClinica, setFormClinica] = useState({ nome: '', endereco: '', telefone: '' });
   const [formMedico, setFormMedico] = useState({ nome: '', crm: '', especialidade: '', clinicaId: '' });
   const [formProcedimento, setFormProcedimento] = useState({ nome: '', valor: '', duracao: '' });
-  const [formUsuario, setFormUsuario] = useState({ nome: '', email: '', senha: '', tipo: 'usuario', clinicaId: '', acessoRelatorios: false });
+  const [formUsuario, setFormUsuario] = useState({ nome: '', email: '', senha: '', tipo: 'usuario', clinicaId: '', acessoRelatorios: false, telefone: '' });
 
   // Estados do Relatório
   const [filtroRelatorio, setFiltroRelatorio] = useState({
@@ -178,6 +178,12 @@ const MasterScreen = () => {
       return;
     }
 
+    // Se for criação pelo Master, telefone é obrigatório
+    if (!itemEditando && !formUsuario.telefone) {
+      setErro('Telefone é obrigatório ao criar um novo usuário pelo Master');
+      return;
+    }
+
     // Master ou Admin precisam de clínica, exceto Master
     if (formUsuario.tipo !== 'master' && !formUsuario.clinicaId) {
       setErro('Selecione uma clínica para o usuário');
@@ -214,7 +220,8 @@ const MasterScreen = () => {
       senha: '',
       tipo: usuario.tipo,
       clinicaId: usuario.clinicaId?.toString() || '',
-      acessoRelatorios: usuario.acessoRelatorios || false
+      acessoRelatorios: usuario.acessoRelatorios || false,
+      telefone: usuario.telefone || ''
     });
     setModalAberto('usuario');
   };
@@ -243,7 +250,7 @@ const MasterScreen = () => {
     setFormClinica({ nome: '', endereco: '', telefone: '' });
     setFormMedico({ nome: '', crm: '', especialidade: '', clinicaId: '' });
     setFormProcedimento({ nome: '', valor: '', duracao: '' });
-    setFormUsuario({ nome: '', email: '', senha: '', tipo: 'usuario', clinicaId: '', acessoRelatorios: false });
+    setFormUsuario({ nome: '', email: '', senha: '', tipo: 'usuario', clinicaId: '', acessoRelatorios: false, telefone: '' });
   };
 
   const formatarData = (data) => {
@@ -1241,6 +1248,13 @@ const MasterScreen = () => {
                 value={formUsuario.email}
                 onChange={(e) => setFormUsuario({ ...formUsuario, email: e.target.value })}
                 required
+              />
+              <Input
+                label="Telefone"
+                value={formUsuario.telefone}
+                onChange={(e) => setFormUsuario({ ...formUsuario, telefone: e.target.value })}
+                placeholder="(11) 99999-9999"
+                required={!itemEditando}
               />
               <Input
                 label={itemEditando ? "Nova Senha (deixe vazio para manter)" : "Senha"}

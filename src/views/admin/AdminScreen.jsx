@@ -37,7 +37,8 @@ const AdminScreen = () => {
     nome: '',
     email: '',
     senha: '',
-    tipo: 'usuario'
+    tipo: 'usuario',
+    telefone: ''
   });
   const [formMedico, setFormMedico] = useState({
     nome: '',
@@ -107,7 +108,8 @@ const AdminScreen = () => {
       nome: usuario.nome,
       email: usuario.email,
       senha: '',
-      tipo: usuario.tipo
+      tipo: usuario.tipo,
+      telefone: usuario.telefone || ''
     });
     setModalAberto('usuario');
   };
@@ -418,6 +420,13 @@ const AdminScreen = () => {
                 value={formUsuario.email}
                 onChange={(e) => setFormUsuario({ ...formUsuario, email: e.target.value })}
                 required
+              />
+              <Input
+                label="Telefone"
+                value={formUsuario.telefone}
+                onChange={(e) => setFormUsuario({ ...formUsuario, telefone: e.target.value })}
+                placeholder="(11) 99999-9999"
+                disabled={!!itemEditando} // só master pode alterar depois
               />
               <Input
                 label={itemEditando ? "Nova Senha (deixe vazio para manter)" : "Senha"}

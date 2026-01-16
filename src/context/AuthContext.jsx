@@ -60,6 +60,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const forgotPassword = async (contact) => {
+    try {
+      const resultado = await apiService.forgotPassword(contact);
+      if (resultado.message) {
+        toast.success(resultado.message);
+        return { success: true };
+      }
+      throw new Error(resultado.error || 'Erro ao solicitar redefinição de senha');
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao solicitar redefinição de senha';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
+  };
+
   const logout = async () => {
     await apiService.logout();
     setUsuarioLogado(null);
@@ -183,6 +198,7 @@ export const AuthProvider = ({ children }) => {
     adicionarUsuario,
     editarUsuario,
     excluirUsuario,
+    forgotPassword,
   };
 
   return (

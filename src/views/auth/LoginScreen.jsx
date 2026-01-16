@@ -6,12 +6,15 @@ import Input from '../../components/Input';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
 
 const LoginScreen = () => {
-  const { login } = useAuth();
+  const { login, forgotPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mostrarEsqueci, setMostrarEsqueci] = useState(false);
+  const [contatoRecuperacao, setContatoRecuperacao] = useState('');
+  const [loadingEsqueci, setLoadingEsqueci] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -84,27 +87,55 @@ const LoginScreen = () => {
           </Button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <p className="text-xs text-gray-400 text-center mb-3">Usuarios de teste:</p>
-          <div className="text-xs text-gray-500 space-y-2 bg-gray-50 p-3 rounded-lg">
-            <div className="flex justify-between">
-              <span className="font-semibold text-purple-600">Master:</span>
-              <span>master@biosystem.com / 123456</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-semibold text-blue-600">Admin:</span>
-              <span>admin@biosystem.com / 123456</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-semibold text-green-600">Recepcionista:</span>
-              <span>usuario@biosystem.com / 123456</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-semibold text-teal-600">Medico:</span>
-              <span>carlos@biosystem.com / 123456</span>
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            className="text-sm text-blue-600 hover:underline"
+            onClick={() => setMostrarEsqueci(!mostrarEsqueci)}
+          >
+            Esqueci a senha
+          </button>
+        </div>
+
+        {mostrarEsqueci && (
+          <div className="mt-4 bg-gray-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600 mb-2">Informe seu email ou telefone cadastrado para receber a nova senha.</p>
+            <Input
+              label="Email ou Telefone"
+              value={contatoRecuperacao}
+              onChange={(e) => setContatoRecuperacao(e.target.value)}
+              placeholder="email@exemplo.com ou (11) 99999-9999"
+            />
+            <div className="flex gap-2 mt-3">
+              <Button
+                fullWidth
+                variant="secondary"
+                onClick={() => { setMostrarEsqueci(false); setContatoRecuperacao(''); }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                fullWidth
+                onClick={async () => {
+                  setLoadingEsqueci(true);
+                  try {
+                    const resultado = await forgotPassword(contatoRecuperacao);
+                    if (resultado.success) {
+                      setContatoRecuperacao('');
+                      setMostrarEsqueci(false);
+                    }
+                  } catch (err) {
+                    // handled in context
+                  }
+                  setLoadingEsqueci(false);
+                }}
+                disabled={loadingEsqueci || !contatoRecuperacao}
+              >
+                {loadingEsqueci ? 'Enviando...' : 'Enviar nova senha'}
+              </Button>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
