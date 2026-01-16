@@ -152,6 +152,47 @@ class ApiService {
   async deletarProntuario(id) {
     return this.request('DELETE', `/prontuarios/${id}`);
   }
+
+  // ========== CLÍNICAS ==========
+  async listarClinicas() {
+    return this.request('GET', '/clinicas');
+  }
+
+  async obterClinica(id) {
+    return this.request('GET', `/clinicas/${id}`);
+  }
+
+  async criarClinica(dados) {
+    return this.request('POST', '/clinicas', dados);
+  }
+
+  async atualizarClinica(id, dados) {
+    return this.request('PUT', `/clinicas/${id}`, dados);
+  }
+
+  async deletarClinica(id) {
+    return this.request('DELETE', `/clinicas/${id}`);
+  }
+
+  // ========== FILA DE ATENDIMENTO ==========
+  async listarFila(clinicaId = null, status = null) {
+    let query = '?';
+    if (clinicaId) query += `clinica_id=${clinicaId}&`;
+    if (status) query += `status=${status}`;
+    return this.request('GET', `/fila-atendimento${query === '?' ? '' : query}`);
+  }
+
+  async adicionarFila(dados) {
+    return this.request('POST', '/fila-atendimento', dados);
+  }
+
+  async atualizarFila(id, dados) {
+    return this.request('PUT', `/fila-atendimento/${id}`, dados);
+  }
+
+  async removerFila(id) {
+    return this.request('DELETE', `/fila-atendimento/${id}`);
+  }
 }
 
 const apiService = new ApiService();

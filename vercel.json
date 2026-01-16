@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm install && npm run build:prod",
+  "buildCommand": "GENERATE_SOURCEMAP=false npm run build",
   "installCommand": "npm install --legacy-peer-deps",
   "builds": [
     {

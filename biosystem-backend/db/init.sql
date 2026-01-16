@@ -3,6 +3,18 @@
 -- TABELAS
 -- ============================================
 
+-- Tabela de Clínicas
+CREATE TABLE IF NOT EXISTS clinicas (
+  id SERIAL PRIMARY KEY,
+  nome VARCHAR(255) NOT NULL,
+  endereco VARCHAR(500),
+  telefone VARCHAR(20),
+  email VARCHAR(255),
+  cnpj VARCHAR(18) UNIQUE,
+  ativo BOOLEAN DEFAULT true,
+  data_cadastro TIMESTAMP DEFAULT NOW()
+);
+
 -- Tabela de Usuários
 CREATE TABLE IF NOT EXISTS usuarios (
   id SERIAL PRIMARY KEY,
@@ -84,6 +96,11 @@ CREATE INDEX IF NOT EXISTS idx_fila_status ON fila_atendimento(status);
 -- ============================================
 -- DADOS DE TESTE (OPCIONAL)
 -- ============================================
+
+-- Clínica padrão
+INSERT INTO clinicas (nome, endereco, telefone, email, ativo)
+VALUES ('Clínica Biosystem', 'Rua Principal, 123 - Centro', '(11) 3333-3333', 'contato@biosystem.com', true)
+ON CONFLICT DO NOTHING;
 
 -- Usuário Master
 INSERT INTO usuarios (nome, email, senha, tipo, clinica_id, telefone, ativo)
