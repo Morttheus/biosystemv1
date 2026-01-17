@@ -103,9 +103,9 @@ router.put('/:id', authenticate, async (req, res) => {
     }
 
     if (email) {
-      // Verifica se novo email já existe
+      // Verifica se novo email já existe e está ativo
       const emailExiste = await pool.query(
-        'SELECT id FROM usuarios WHERE email = $1 AND id != $2',
+        'SELECT id FROM usuarios WHERE email = $1 AND id != $2 AND ativo = true',
         [email, id]
       );
       if (emailExiste.rows.length > 0) {

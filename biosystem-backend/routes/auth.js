@@ -16,8 +16,8 @@ router.post('/registrar', async (req, res) => {
       return res.status(400).json({ error: 'Nome, email, senha e telefone são obrigatórios' });
     }
 
-    // Verifica se email já existe
-    const emailExiste = await pool.query('SELECT id FROM usuarios WHERE email = $1', [email]);
+    // Verifica se email já existe e está ativo
+    const emailExiste = await pool.query('SELECT id FROM usuarios WHERE email = $1 AND ativo = true', [email]);
     if (emailExiste.rows.length > 0) {
       return res.status(400).json({ error: 'Este email já está cadastrado' });
     }
