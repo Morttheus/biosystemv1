@@ -23,6 +23,19 @@ export const DataProvider = ({ children }) => {
     { id: 2, nome: 'BioSystem Oftalmologia Sul', endereco: 'Av. Sul, 500', telefone: '(11) 4444-4444', ativa: true },
   ]);
 
+  // Carregar clínicas da API
+  const carregarClinicas = async () => {
+    try {
+      console.log('🔄 [DataContext] Carregando clínicas da API...');
+      const lista = await apiService.listarClinicas();
+      console.log('✅ [DataContext] Clínicas carregadas:', lista);
+      setClinicas(lista);
+    } catch (err) {
+      console.error('❌ [DataContext] Erro ao carregar clínicas:', err);
+      toast.error('Erro ao carregar clínicas');
+    }
+  };
+
   // Médicos
   const [medicos, setMedicos] = useState([
     { id: 1, nome: 'Carlos Silva', crm: '12345-SP', especialidade: 'Oftalmologia Geral', clinicaId: 1, ativo: true },
@@ -83,6 +96,7 @@ export const DataProvider = ({ children }) => {
   // Carregar dados ao montar o componente
   useEffect(() => {
     if (usuarioLogado) {
+      carregarClinicas();
       carregarPacientes();
       carregarProntuarios();
       carregarFila();
