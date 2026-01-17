@@ -8,6 +8,11 @@ const router = express.Router();
 // 📋 LISTAR CLÍNICAS
 router.get('/', authenticate, async (req, res) => {
   try {
+    // Garantir que dados sejam sempre atualizados em tempo real
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     const resultado = await pool.query(
       `SELECT id, nome, endereco, telefone, email, cnpj, ativo, data_cadastro
        FROM clinicas WHERE ativo = true ORDER BY nome ASC`
@@ -49,10 +54,10 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Nome é obrigatório' });
     }
 
-    // Verifica se CNPJ já existe (se fornecido)
+    // Verifica se CNPJ já existe e está ATIVO (se fornecido)
     if (cnpj) {
       const cnpjExiste = await pool.query(
-        'SELECT id FROM clinicas WHERE cnpj = $1',
+        'SELECT id FROM clinicas WHERE cnpj = $1 AND ativo = true',
         [cnpj]
       );
       if (cnpjExiste.rows.length > 0) {

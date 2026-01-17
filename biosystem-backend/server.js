@@ -28,6 +28,14 @@ const app = express();
 // Middleware
 app.use(express.json());
 
+// 🔄 Middleware para desabilitar cache global - garante sincronização em tempo real
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+
 // CORS - Permitir múltiplos domínios
 const allowedOrigins = [
   'http://localhost:3000',

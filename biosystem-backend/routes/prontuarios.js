@@ -8,6 +8,11 @@ const router = express.Router();
 // 📋 LISTAR PRONTUÁRIOS
 router.get('/', authenticate, async (req, res) => {
   try {
+    // Garantir que dados sejam sempre atualizados em tempo real
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     const { paciente_id, clinica_id } = req.query;
     let query = 'SELECT id, paciente_id, medico_id, clinica_id, data, descricao, ativo FROM prontuarios WHERE ativo = true';
     const params = [];

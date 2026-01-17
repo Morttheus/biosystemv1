@@ -9,9 +9,14 @@ const router = express.Router();
 // 📋 LISTAR USUÁRIOS
 router.get('/', authenticate, async (req, res) => {
   try {
+    // Garantir que dados sejam sempre atualizados em tempo real
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     const resultado = await pool.query(
       `SELECT id, nome, email, tipo, clinica_id, telefone, ativo, data_criacao 
-       FROM usuarios ORDER BY data_criacao DESC`
+       FROM usuarios WHERE ativo = true ORDER BY data_criacao DESC`
     );
 
     const usuarios = resultado.rows.map(u => ({

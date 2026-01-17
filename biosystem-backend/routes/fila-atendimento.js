@@ -8,6 +8,11 @@ const router = express.Router();
 // 📋 LISTAR FILA DE ATENDIMENTO
 router.get('/', authenticate, async (req, res) => {
   try {
+    // Garantir que dados sejam sempre atualizados em tempo real
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     const { clinica_id, status } = req.query;
     let query = 'SELECT id, paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada, horario_atendimento FROM fila_atendimento WHERE 1=1';
     const params = [];

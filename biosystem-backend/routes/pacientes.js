@@ -8,6 +8,11 @@ const router = express.Router();
 // 📋 LISTAR PACIENTES
 router.get('/', authenticate, async (req, res) => {
   try {
+    // Garantir que dados sejam sempre atualizados em tempo real
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     const { clinica_id } = req.query;
     let query = 'SELECT id, nome, cpf, telefone, clinica_id, data_cadastro FROM pacientes WHERE ativo = true';
     const params = [];
@@ -140,6 +145,27 @@ router.put('/:id', authenticate, async (req, res) => {
     });
   } catch (erro) {
     console.error('Erro ao editar paciente:', erro);
+    res.status(500).json({ error: erro.message });
+  }
+});
+
+// 🗑️ DELETAR PACIENTE (Soft delete)
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const resultado = await pool.query(
+      'UPDATE pacientes SET ativo = false WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: 'Paciente não encontrado' });
+    }
+
+    res.json({ message: 'Paciente desativado com sucesso' });
+  } catch (erro) {
+    console.error('Erro ao deletar paciente:', erro);
     res.status(500).json({ error: erro.message });
   }
 });
