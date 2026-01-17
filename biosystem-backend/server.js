@@ -65,6 +65,21 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Backend rodando' });
 });
 
+// Corrigir senhas dos usuários
+app.get('/api/fix-passwords', async (req, res) => {
+  try {
+    const pool = require('./db/connection');
+    const bcrypt = require('bcryptjs');
+    const senhaHash = await bcrypt.hash('123456', 10);
+
+    await pool.query('UPDATE usuarios SET senha = $1', [senhaHash]);
+
+    res.json({ success: true, message: 'Senhas atualizadas para 123456' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Setup Database - Endpoint para criar tabelas (use apenas uma vez)
 app.get('/api/setup-db', async (req, res) => {
   try {
