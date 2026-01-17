@@ -119,17 +119,23 @@ export const DataProvider = ({ children }) => {
     try {
       // Remove ID se existir (deixar banco gerar)
       const { id, ...dadosClinica } = clinica;
+      console.log('📝 [DataContext] Enviando clínica para API:', dadosClinica);
+      
       const resultado = await apiService.criarClinica(dadosClinica);
+      console.log('📊 [DataContext] Resposta da API:', resultado);
       
       if (resultado.clinica) {
+        console.log('✅ [DataContext] Clínica recebida, atualizando estado:', resultado.clinica);
         setClinicas(prev => [...prev, resultado.clinica]);
         toast.success('Clínica adicionada com sucesso!');
         return { success: true, clinica: resultado.clinica };
       }
       
+      console.error('❌ [DataContext] Resposta sem clínica:', resultado);
       throw new Error(resultado.error || 'Erro ao adicionar clínica');
     } catch (err) {
       const mensagem = err.message || 'Erro ao adicionar clínica';
+      console.error('❌ [DataContext] Erro:', mensagem);
       toast.error(mensagem);
       return { success: false, error: mensagem };
     }

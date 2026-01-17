@@ -49,6 +49,7 @@ router.get('/:id', authenticate, async (req, res) => {
 router.post('/', authenticate, async (req, res) => {
   try {
     const { nome, endereco, telefone, email, cnpj } = req.body;
+    console.log('📝 [POST /clinicas] Recebido:', { nome, endereco, telefone, email, cnpj });
 
     if (!nome) {
       return res.status(400).json({ error: 'Nome é obrigatório' });
@@ -72,12 +73,14 @@ router.post('/', authenticate, async (req, res) => {
       [nome, endereco || null, telefone || null, email || null, cnpj || null]
     );
 
+    console.log('✅ [POST /clinicas] Clínica criada:', resultado.rows[0]);
+
     res.status(201).json({
       message: 'Clínica criada com sucesso',
       clinica: resultado.rows[0]
     });
   } catch (erro) {
-    console.error('Erro ao criar clínica:', erro);
+    console.error('❌ [POST /clinicas] Erro ao criar clínica:', erro);
     res.status(500).json({ error: erro.message });
   }
 });

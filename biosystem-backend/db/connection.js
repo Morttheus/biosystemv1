@@ -28,7 +28,17 @@ pool.on('error', (err) => {
 
 // Testar conexão inicial
 pool.query('SELECT NOW()')
-  .then(() => console.log('✅ Banco de dados respondendo'))
-  .catch(err => console.error('❌ Erro ao conectar ao banco:', err.message));
+  .then(result => {
+    console.log('✅ Banco de dados respondendo:', result.rows[0]);
+  })
+  .catch(err => {
+    console.error('❌ Erro ao conectar ao banco:', err.message);
+    console.error('📍 Config:', {
+      host: poolConfig.host,
+      port: poolConfig.port,
+      database: poolConfig.database,
+      user: poolConfig.user
+    });
+  });
 
 module.exports = pool;
