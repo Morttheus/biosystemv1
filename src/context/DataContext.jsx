@@ -30,6 +30,18 @@ export const DataProvider = ({ children }) => {
     { id: 3, nome: 'João Oliveira', crm: '11111-SP', especialidade: 'Glaucoma', clinicaId: 2, ativo: true },
   ]);
 
+  // Carregar médicos da API
+  const carregarMedicos = async () => {
+    try {
+      const clinicaId = usuarioLogado?.clinica_id;
+      const lista = await apiService.listarMedicos(clinicaId);
+      setMedicos(lista);
+    } catch (err) {
+      console.error('Erro ao carregar médicos:', err);
+      toast.error('Erro ao carregar médicos');
+    }
+  };
+
   // Procedimentos (globais - todas as clínicas usam os mesmos)
   const [procedimentos, setProcedimentos] = useState([
     { id: 1, nome: 'Consulta Oftalmológica', valor: 250.00, duracao: 30, ativo: true },
@@ -74,6 +86,7 @@ export const DataProvider = ({ children }) => {
       carregarPacientes();
       carregarProntuarios();
       carregarFila();
+      carregarMedicos();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuarioLogado]);
@@ -121,22 +134,55 @@ export const DataProvider = ({ children }) => {
   };
 
   // ============ FUNÇÕES DE MÉDICOS ============
-  const adicionarMedico = (medico) => {
-    const novoMedico = {
-      ...medico,
-      id: Date.now(),
-      ativo: true,
-    };
-    setMedicos(prev => [...prev, novoMedico]);
-    return novoMedico;
+  const adicionarMedico = async (medico) => {
+    try {
+      // Remove ID se existir (deixar banco gerar)
+      const { id, ...dadosMedico } = medico;
+      const resultado = await apiService.criarMedico(dadosMedico);
+      
+      if (resultado.medico) {
+        setMedicos(prev => [...prev, resultado.medico]);
+        toast.success('Médico adicionado com sucesso!');
+        return { success: true, medico: resultado.medico };
+      }
+      
+      throw new Error(resultado.error || 'Erro ao adicionar médico');
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao adicionar médico';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
   };
 
-  const editarMedico = (id, dados) => {
-    setMedicos(prev => prev.map(m => m.id === id ? { ...m, ...dados } : m));
+  const editarMedico = async (id, dados) => {
+    try {
+      const resultado = await apiService.atualizarMedico(id, dados);
+      
+      if (resultado.medico) {
+        setMedicos(prev => prev.map(m => m.id === id ? resultado.medico : m));
+        toast.success('Médico atualizado com sucesso!');
+        return { success: true };
+      }
+      
+      throw new Error(resultado.error || 'Erro ao atualizar médico');
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao atualizar médico';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
   };
 
-  const excluirMedico = (id) => {
-    setMedicos(prev => prev.map(m => m.id === id ? { ...m, ativo: false } : m));
+  const excluirMedico = async (id) => {
+    try {
+      await apiService.deletarMedico(id);
+      setMedicos(prev => prev.map(m => m.id === id ? { ...m, ativo: false } : m));
+      toast.success('Médico deletado com sucesso!');
+      return { success: true };
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao deletar médico';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
   };
 
   // ============ FUNÇÕES DE PROCEDIMENTOS ============

@@ -4,7 +4,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 // Usar mock se PostgreSQL não estiver disponível
-let authRoutes, usuariosRoutes, pacientesRoutes, prontuariosRoutes, filaAtendimentoRoutes, clinicasRoutes;
+let authRoutes, usuariosRoutes, pacientesRoutes, prontuariosRoutes, filaAtendimentoRoutes, clinicasRoutes, medicosRoutes;
 try {
   authRoutes = require('./routes/auth');
   usuariosRoutes = require('./routes/usuarios');
@@ -12,6 +12,7 @@ try {
   prontuariosRoutes = require('./routes/prontuarios');
   filaAtendimentoRoutes = require('./routes/fila-atendimento');
   clinicasRoutes = require('./routes/clinicas');
+  medicosRoutes = require('./routes/medicos');
 } catch (err) {
   console.warn('⚠️  Não conseguiu carregar rotas PostgreSQL:', err.message);
   console.log('📦 Usando Mock Backend em memória...\n');
@@ -21,6 +22,7 @@ try {
   prontuariosRoutes = require('./routes/prontuarios-mock');
   filaAtendimentoRoutes = require('./routes/fila-atendimento-mock');
   clinicasRoutes = require('./routes/clinicas-mock');
+  medicosRoutes = require('./routes/medicos'); // Usar rota real mesmo sem banco
 }
 
 const app = express();
@@ -80,6 +82,7 @@ app.use('/api/pacientes', pacientesRoutes);
 app.use('/api/prontuarios', prontuariosRoutes);
 app.use('/api/fila-atendimento', filaAtendimentoRoutes);
 app.use('/api/clinicas', clinicasRoutes);
+app.use('/api/medicos', medicosRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {

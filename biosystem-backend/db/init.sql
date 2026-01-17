@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS pacientes (
 
 -- Tabela de Médicos
 CREATE TABLE IF NOT EXISTS medicos (
-  id SERIAL PRIMARY KEY,
+  id BIGSERIAL PRIMARY KEY,
   nome VARCHAR(255) NOT NULL,
   crm VARCHAR(50) UNIQUE NOT NULL,
   especialidade VARCHAR(255),

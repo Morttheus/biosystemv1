@@ -193,6 +193,28 @@ class ApiService {
   async removerFila(id) {
     return this.request('DELETE', `/fila-atendimento/${id}`);
   }
+
+  // ========== MÉDICOS ==========
+  async listarMedicos(clinicaId = null) {
+    const query = clinicaId ? `?clinica_id=${clinicaId}` : '';
+    return this.request('GET', `/medicos${query}`);
+  }
+
+  async obterMedico(id) {
+    return this.request('GET', `/medicos/${id}`);
+  }
+
+  async criarMedico(dados) {
+    return this.request('POST', '/medicos', dados);
+  }
+
+  async atualizarMedico(id, dados) {
+    return this.request('PUT', `/medicos/${id}`, dados);
+  }
+
+  async deletarMedico(id) {
+    return this.request('DELETE', `/medicos/${id}`);
+  }
 }
 
 const apiService = new ApiService();
