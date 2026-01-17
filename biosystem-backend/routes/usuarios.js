@@ -203,4 +203,31 @@ router.delete('/:id', authenticate, async (req, res) => {
   }
 });
 
+// 🆕 CRIAR NOVO USUÁRIO
+router.post('/', authenticate, async (req, res) => {
+  try {
+    const { nome, email, senha, tipo, clinicaId, telefone } = req.body;
+    // Verifica se já existe usuário ativo com mesmo email
+    const existe = await pool.query(
+      'SELECT id FROM usuarios WHERE email = $1 AND ativo = true',
+      [email]
+    );
+    if (existe.rows.length > 0) {
+      return res.status(400).json({ error: 'Já existe um usuário ativo com este email' });
+    }
+    const senhaHash = await bcrypt.hash(senha, 10);
+    const resultado = await pool.query(
+      `INSERT INTO usuarios (nome, email, senha, tipo, clinica_id, telefone, ativo, data_criacao)
+       VALUES ($1, $2, $3, $4, $5, $6, true, NOW())
+       RETURNING id, nome, email, tipo, clinica_id, telefone, ativo`,
+      [nome, email, senhaHash, tipo, clinicaId, telefone]
+    );
+    const novoUsuario = resultado.rows[0];
+    res.status(201).json({ message: 'Usuário criado com sucesso', usuario: novoUsuario });
+  } catch (erro) {
+    console.error('Erro ao criar usuário:', erro);
+    res.status(500).json({ error: erro.message });
+  }
+});
+
 module.exports = router;
