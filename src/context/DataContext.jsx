@@ -68,17 +68,29 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // Carregar pacientes ao montar o componente
+  // Carregar dados ao montar o componente
   useEffect(() => {
     if (usuarioLogado) {
       carregarPacientes();
       carregarProntuarios();
+      carregarFila();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuarioLogado]);
 
   // Fila de atendimento
   const [filaAtendimento, setFilaAtendimento] = useState([]);
+
+  // Carregar fila de atendimento
+  const carregarFila = async () => {
+    try {
+      const clinicaId = usuarioLogado?.clinica_id;
+      const lista = await apiService.listarFila(clinicaId);
+      setFilaAtendimento(lista);
+    } catch (err) {
+      console.error('Erro ao carregar fila:', err);
+    }
+  };
 
   // Chamadas de pacientes (para painel de sala de espera)
   const [chamadas, setChamadas] = useState([]);
@@ -195,90 +207,102 @@ export const DataProvider = ({ children }) => {
   };
 
   // ============ FUNÇÕES DE FILA DE ATENDIMENTO ============
-  const adicionarNaFila = (pacienteId, medicoId, procedimentoId, clinicaId) => {
-    const paciente = pacientes.find(p => p.id === pacienteId);
-    const medico = medicos.find(m => m.id === medicoId);
-    const procedimento = procedimentos.find(p => p.id === procedimentoId);
+  const adicionarNaFila = async (pacienteId, medicoId, procedimentoId, clinicaIdParam) => {
+    try {
+      const paciente = pacientes.find(p => p.id === pacienteId);
+      const medico = medicos.find(m => m.id === medicoId);
+      const clinicaId = clinicaIdParam || usuarioLogado?.clinica_id || 1;
 
-    const novoAtendimento = {
-      id: Date.now(),
-      pacienteId,
-      pacienteNome: paciente?.nome,
-      pacienteCPF: paciente?.cpf,
-      medicoId,
-      medicoNome: medico?.nome,
-      procedimentoId,
-      procedimentoNome: procedimento?.nome,
-      clinicaId,
-      valor: procedimento?.valor || 0,
-      status: 'aguardando', // aguardando, em_atendimento, atendido
-      horarioChegada: new Date().toISOString(),
-      horarioAtendimento: null,
-      horarioFinalizacao: null,
-    };
+      const resultado = await apiService.adicionarFila({
+        pacienteId,
+        pacienteNome: paciente?.nome,
+        medicoId: medicoId || null,
+        medicoNome: medico?.nome || null,
+        clinicaId,
+      });
 
-    setFilaAtendimento(prev => [...prev, novoAtendimento]);
-    return novoAtendimento;
+      if (resultado.filaAtendimento) {
+        setFilaAtendimento(prev => [...prev, resultado.filaAtendimento]);
+        toast.success('Paciente adicionado à fila!');
+        return resultado.filaAtendimento;
+      }
+
+      throw new Error(resultado.error || 'Erro ao adicionar à fila');
+    } catch (err) {
+      toast.error(err.message || 'Erro ao adicionar à fila');
+      return null;
+    }
   };
 
-  const chamarPaciente = (atendimentoId) => {
-    setFilaAtendimento(prev => prev.map(a =>
-      a.id === atendimentoId
-        ? { ...a, status: 'em_atendimento', horarioAtendimento: new Date().toISOString() }
-        : a
-    ));
+  const chamarPaciente = async (atendimentoId, medicoId, medicoNome) => {
+    try {
+      const resultado = await apiService.atualizarFila(atendimentoId, {
+        status: 'atendendo',
+        medicoId,
+        medicoNome,
+      });
+
+      if (resultado.filaAtendimento) {
+        setFilaAtendimento(prev => prev.map(a =>
+          a.id === atendimentoId ? resultado.filaAtendimento : a
+        ));
+      }
+
+      return resultado;
+    } catch (err) {
+      toast.error('Erro ao chamar paciente');
+      throw err;
+    }
   };
 
   const obterAtendimentoAtual = (medicoId) => {
-    return filaAtendimento.find(a => a.medicoId === medicoId && a.status === 'em_atendimento');
+    return filaAtendimento.find(a => a.medico_id === medicoId && a.status === 'atendendo');
   };
 
-  const finalizarAtendimento = (atendimentoId, dadosConsulta) => {
-    const atendimento = filaAtendimento.find(a => a.id === atendimentoId);
-    if (!atendimento) return null;
+  const finalizarAtendimento = async (atendimentoId, dadosConsulta) => {
+    try {
+      const atendimento = filaAtendimento.find(a => a.id === atendimentoId);
+      if (!atendimento) return null;
 
-    // Cria registro no prontuário
-    const registroProntuario = {
-      id: Date.now(),
-      atendimentoId,
-      pacienteId: atendimento.pacienteId,
-      medicoId: atendimento.medicoId,
-      medicoNome: atendimento.medicoNome,
-      clinicaId: atendimento.clinicaId,
-      procedimento: atendimento.procedimentoNome,
-      data: new Date().toISOString(),
-      anamnese: dadosConsulta.anamnese || {},
-      diagnostico: dadosConsulta.diagnostico || '',
-      prescricao: dadosConsulta.prescricao || '',
-      observacoes: dadosConsulta.observacoes || '',
-      retorno: dadosConsulta.retorno || null,
-    };
+      // Cria registro no prontuário via API
+      const clinicaId = usuarioLogado?.clinica_id || 1;
+      const resultadoProntuario = await apiService.criarProntuario({
+        paciente_id: atendimento.paciente_id,
+        medico_id: atendimento.medico_id,
+        clinica_id: clinicaId,
+        descricao: JSON.stringify({
+          diagnostico: dadosConsulta.diagnostico || '',
+          prescricao: dadosConsulta.prescricao || '',
+          observacoes: dadosConsulta.observacoes || '',
+          anamnese: dadosConsulta.anamnese || {},
+        }),
+      });
 
-    setProntuarios(prev => [...prev, registroProntuario]);
-
-    // Atualiza histórico do paciente
-    setPacientes(prev => prev.map(p => {
-      if (p.id === atendimento.pacienteId) {
-        return {
-          ...p,
-          historicoConsultas: [...(p.historicoConsultas || []), registroProntuario.id],
-        };
+      if (resultadoProntuario.prontuario) {
+        setProntuarios(prev => [...prev, resultadoProntuario.prontuario]);
       }
-      return p;
-    }));
 
-    // Marca atendimento como finalizado
-    setFilaAtendimento(prev => prev.map(a =>
-      a.id === atendimentoId
-        ? { ...a, status: 'atendido', horarioFinalizacao: new Date().toISOString() }
-        : a
-    ));
+      // Remove da fila
+      await apiService.removerFila(atendimentoId);
+      setFilaAtendimento(prev => prev.filter(a => a.id !== atendimentoId));
 
-    return registroProntuario;
+      toast.success('Atendimento finalizado!');
+      return resultadoProntuario.prontuario;
+    } catch (err) {
+      toast.error('Erro ao finalizar atendimento');
+      throw err;
+    }
   };
 
-  const removerDaFila = (atendimentoId) => {
-    setFilaAtendimento(prev => prev.filter(a => a.id !== atendimentoId));
+  const removerDaFila = async (atendimentoId) => {
+    try {
+      await apiService.removerFila(atendimentoId);
+      setFilaAtendimento(prev => prev.filter(a => a.id !== atendimentoId));
+      toast.success('Paciente removido da fila');
+    } catch (err) {
+      toast.error('Erro ao remover da fila');
+      throw err;
+    }
   };
 
   // ============ FUNÇÕES DE PRONTUÁRIO ============

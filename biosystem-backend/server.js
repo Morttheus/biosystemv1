@@ -65,19 +65,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Backend rodando' });
 });
 
-// Endpoint temporário para definir senha segura do master (remover após uso)
-app.get('/api/secure-master', async (req, res) => {
-  try {
-    const pool = require('./db/connection');
-    // Senha segura: Biosystem@2024
-    const senhaHash = '$2b$10$ALpe6a8sRa1pmVsq1BqhseNI4Iv/fBhfY.vu.ZS/IIk1pZJo5S05u';
-    await pool.query('UPDATE usuarios SET senha = $1 WHERE email = $2', [senhaHash, 'master@biosystem.com']);
-    res.json({ success: true, message: 'Senha do master atualizada' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // Rotas
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
