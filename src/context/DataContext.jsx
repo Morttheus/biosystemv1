@@ -121,13 +121,13 @@ export const DataProvider = ({ children }) => {
       const { id, ...dadosClinica } = clinica;
       const resultado = await apiService.criarClinica(dadosClinica);
       
-      if (resultado && resultado.id) {
-        setClinicas(prev => [...prev, resultado]);
+      if (resultado.clinica) {
+        setClinicas(prev => [...prev, resultado.clinica]);
         toast.success('Clínica adicionada com sucesso!');
-        return { success: true, clinica: resultado };
+        return { success: true, clinica: resultado.clinica };
       }
       
-      throw new Error('Erro ao adicionar clínica');
+      throw new Error(resultado.error || 'Erro ao adicionar clínica');
     } catch (err) {
       const mensagem = err.message || 'Erro ao adicionar clínica';
       toast.error(mensagem);
