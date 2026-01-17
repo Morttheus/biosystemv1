@@ -115,14 +115,24 @@ export const DataProvider = ({ children }) => {
   };
 
   // ============ FUNÇÕES DE CLÍNICAS ============
-  const adicionarClinica = (clinica) => {
-    const novaClinica = {
-      ...clinica,
-      id: Date.now(),
-      ativa: true,
-    };
-    setClinicas(prev => [...prev, novaClinica]);
-    return novaClinica;
+  const adicionarClinica = async (clinica) => {
+    try {
+      // Remove ID se existir (deixar banco gerar)
+      const { id, ...dadosClinica } = clinica;
+      const resultado = await apiService.criarClinica(dadosClinica);
+      
+      if (resultado && resultado.id) {
+        setClinicas(prev => [...prev, resultado]);
+        toast.success('Clínica adicionada com sucesso!');
+        return { success: true, clinica: resultado };
+      }
+      
+      throw new Error('Erro ao adicionar clínica');
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao adicionar clínica';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
   };
 
   const editarClinica = (id, dados) => {
@@ -187,9 +197,10 @@ export const DataProvider = ({ children }) => {
 
   // ============ FUNÇÕES DE PROCEDIMENTOS ============
   const adicionarProcedimento = (procedimento) => {
+    // Gera ID com valor seguro (não usa Date.now() que causa overflow)
     const novoProcedimento = {
       ...procedimento,
-      id: Date.now(),
+      id: Math.floor(Math.random() * 1000000) + 1,
       ativo: true,
     };
     setProcedimentos(prev => [...prev, novoProcedimento]);
@@ -418,8 +429,9 @@ export const DataProvider = ({ children }) => {
 
   // ============ FUNÇÕES DE CHAMADAS DE PACIENTES ============
   const registrarChamada = (pacienteId, pacienteNome, medicoId, medicoNome, clinicaId) => {
+    // Gera ID com valor seguro (não usa Date.now() que causa overflow)
     const novaChamada = {
-      id: Date.now(),
+      id: Math.floor(Math.random() * 1000000) + 1,
       pacienteId,
       pacienteNome,
       medicoId,

@@ -97,12 +97,16 @@ const MasterScreen = () => {
   ];
 
   // Handlers de Clínicas
-  const handleSalvarClinica = () => {
+  const handleSalvarClinica = async () => {
     if (!formClinica.nome) return alert('Nome é obrigatório');
     if (itemEditando) {
       editarClinica(itemEditando.id, formClinica);
     } else {
-      adicionarClinica(formClinica);
+      const resultado = await adicionarClinica(formClinica);
+      if (!resultado.success) {
+        toast.error(resultado.error);
+        return;
+      }
     }
     fecharModal();
   };
