@@ -159,7 +159,7 @@ router.delete('/:id', authenticate, async (req, res) => {
     const { id } = req.params;
 
     const resultado = await pool.query(
-      'UPDATE medicos SET ativo = false WHERE id = $1 RETURNING id',
+      'UPDATE medicos SET ativo = false WHERE id = $1 AND ativo = true RETURNING id',
       [id]
     );
 

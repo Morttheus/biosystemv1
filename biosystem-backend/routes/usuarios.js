@@ -41,7 +41,7 @@ router.get('/:id', authenticate, async (req, res) => {
   try {
     const resultado = await pool.query(
       `SELECT id, nome, email, tipo, clinica_id, telefone, ativo 
-       FROM usuarios WHERE id = $1`,
+       FROM usuarios WHERE id = $1 AND ativo = true`,
       [req.params.id]
     );
 
@@ -72,7 +72,7 @@ router.put('/:id', authenticate, async (req, res) => {
 
     // Busca usuário existente
     const usuarioExistente = await pool.query(
-      'SELECT * FROM usuarios WHERE id = $1',
+      'SELECT * FROM usuarios WHERE id = $1 AND ativo = true',
       [id]
     );
 
@@ -191,9 +191,9 @@ router.delete('/:id', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Você não pode deletar sua própria conta' });
     }
 
-    // Soft delete: marca como inativo
+    // Soft delete: marca como inativo (apenas se está ativo)
     const resultado = await pool.query(
-      'UPDATE usuarios SET ativo = false WHERE id = $1 RETURNING id',
+      'UPDATE usuarios SET ativo = false WHERE id = $1 AND ativo = true RETURNING id',
       [id]
     );
 

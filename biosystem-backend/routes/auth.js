@@ -109,7 +109,7 @@ router.post('/login', async (req, res) => {
 router.get('/me', authenticate, async (req, res) => {
   try {
     const resultado = await pool.query(
-      'SELECT id, nome, email, tipo, clinica_id, telefone, ativo FROM usuarios WHERE id = $1',
+      `SELECT id, nome, email, tipo, clinica_id, telefone, ativo FROM usuarios WHERE id = $1 AND ativo = true`,
       [req.usuario.id]
     );
 

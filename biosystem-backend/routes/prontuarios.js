@@ -101,7 +101,7 @@ router.delete('/:id', authenticate, async (req, res) => {
     const { id } = req.params;
 
     const resultado = await pool.query(
-      'UPDATE prontuarios SET ativo = false, data_deletado = NOW() WHERE id = $1 RETURNING id',
+      'UPDATE prontuarios SET ativo = false, data_deletado = NOW() WHERE id = $1 AND ativo = true RETURNING id',
       [id]
     );
 
