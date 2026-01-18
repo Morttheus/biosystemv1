@@ -125,7 +125,8 @@ export const DataProvider = ({ children }) => {
 
   // ============ HELPER - OBTER CLÍNICA DO USUÁRIO ============
   const getClinicaIdUsuario = () => {
-    return usuarioLogado?.clinicaId || null;
+    // Backend retorna clinicaId (camelCase) após mapeamento
+    return usuarioLogado?.clinicaId || usuarioLogado?.clinica_id || null;
   };
 
   // ============ FUNÇÕES DE CLÍNICAS ============
@@ -491,28 +492,34 @@ export const DataProvider = ({ children }) => {
 
   // ============ DADOS FILTRADOS POR CLÍNICA ============
   // Master vê tudo, outros usuários só veem dados da sua clínica
-  const clinicaId = getClinicaIdUsuario();
+  const clinicaIdUsuario = getClinicaIdUsuario();
   const ehMaster = isMaster();
+
+  // Helper para comparar clinicaId (suporta ambos formatos)
+  const matchClinica = (item) => {
+    const itemClinicaId = item.clinicaId || item.clinica_id;
+    return itemClinicaId === clinicaIdUsuario;
+  };
 
   // Médicos filtrados por clínica
   const medicosFiltrados = ehMaster
-    ? medicos.filter(m => m.ativo)
-    : medicos.filter(m => m.ativo && m.clinicaId === clinicaId);
+    ? medicos.filter(m => m.ativo !== false)
+    : medicos.filter(m => m.ativo !== false && matchClinica(m));
 
   // Pacientes filtrados por clínica
   const pacientesFiltrados = ehMaster
     ? pacientes
-    : pacientes.filter(p => p.clinicaId === clinicaId);
+    : pacientes.filter(p => matchClinica(p));
 
   // Fila filtrada por clínica
   const filaFiltrada = ehMaster
     ? filaAtendimento
-    : filaAtendimento.filter(a => a.clinicaId === clinicaId);
+    : filaAtendimento.filter(a => matchClinica(a));
 
   // Prontuários filtrados por clínica
   const prontuariosFiltrados = ehMaster
     ? prontuarios
-    : prontuarios.filter(p => p.clinicaId === clinicaId);
+    : prontuarios.filter(p => matchClinica(p));
 
   const value = {
     // Dados (filtrados por clínica automaticamente)

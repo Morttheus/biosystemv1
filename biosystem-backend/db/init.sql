@@ -37,18 +37,20 @@ CREATE TABLE IF NOT EXISTS pacientes (
   telefone VARCHAR(20),
   clinica_id INTEGER NOT NULL,
   ativo BOOLEAN DEFAULT true,
-  data_cadastro TIMESTAMP DEFAULT NOW()
+  data_cadastro TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (clinica_id) REFERENCES clinicas(id)
 );
 
 -- Tabela de Médicos
 CREATE TABLE IF NOT EXISTS medicos (
-  id BIGSERIAL PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   nome VARCHAR(255) NOT NULL,
   crm VARCHAR(50) UNIQUE NOT NULL,
   especialidade VARCHAR(255),
   clinica_id INTEGER NOT NULL,
   ativo BOOLEAN DEFAULT true,
-  data_cadastro TIMESTAMP DEFAULT NOW()
+  data_cadastro TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (clinica_id) REFERENCES clinicas(id)
 );
 
 -- Tabela de Prontuários
@@ -62,7 +64,8 @@ CREATE TABLE IF NOT EXISTS prontuarios (
   ativo BOOLEAN DEFAULT true,
   data_deletado TIMESTAMP,
   FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
-  FOREIGN KEY (medico_id) REFERENCES medicos(id)
+  FOREIGN KEY (medico_id) REFERENCES medicos(id),
+  FOREIGN KEY (clinica_id) REFERENCES clinicas(id)
 );
 
 -- Tabela de Fila de Atendimento
@@ -73,10 +76,12 @@ CREATE TABLE IF NOT EXISTS fila_atendimento (
   medico_id INTEGER,
   medico_nome VARCHAR(255),
   clinica_id INTEGER NOT NULL,
-  status VARCHAR(50) DEFAULT 'aguardando',
+  status VARCHAR(50) DEFAULT 'aguardando' CHECK (status IN ('aguardando', 'atendendo', 'atendido', 'cancelado')),
   horario_chegada TIMESTAMP DEFAULT NOW(),
   horario_atendimento TIMESTAMP,
-  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)
+  FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+  FOREIGN KEY (medico_id) REFERENCES medicos(id),
+  FOREIGN KEY (clinica_id) REFERENCES clinicas(id)
 );
 
 -- ============================================

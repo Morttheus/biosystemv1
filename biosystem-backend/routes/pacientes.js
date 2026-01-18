@@ -72,16 +72,39 @@ router.get('/cpf/:cpf', authenticate, async (req, res) => {
 // ➕ CRIAR PACIENTE
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { nome, cpf, telefone, clinicaId } = req.body;
+    const { nome, cpf, telefone, clinicaId, clinica_id } = req.body;
+    const clinicaIdFinal = clinicaId || clinica_id;
 
-    if (!nome || !cpf || !clinicaId) {
-      return res.status(400).json({ error: 'Nome, CPF e clínica são obrigatórios' });
+    // Validações
+    if (!nome || !nome.trim()) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+    if (!cpf) {
+      return res.status(400).json({ error: 'CPF é obrigatório' });
+    }
+    if (!clinicaIdFinal) {
+      return res.status(400).json({ error: 'Clínica é obrigatória' });
+    }
+
+    // Validação de formato CPF (apenas números, 11 dígitos)
+    const cpfLimpo = cpf.replace(/\D/g, '');
+    if (cpfLimpo.length !== 11) {
+      return res.status(400).json({ error: 'CPF deve conter 11 dígitos' });
+    }
+
+    // Verifica se clínica existe
+    const clinicaExiste = await pool.query(
+      'SELECT id FROM clinicas WHERE id = $1 AND ativo = true',
+      [clinicaIdFinal]
+    );
+    if (clinicaExiste.rows.length === 0) {
+      return res.status(400).json({ error: 'Clínica não encontrada ou inativa' });
     }
 
     // Verifica se CPF já existe
     const cpfExiste = await pool.query(
       'SELECT id FROM pacientes WHERE cpf = $1 AND ativo = true',
-      [cpf]
+      [cpfLimpo]
     );
 
     if (cpfExiste.rows.length > 0) {
@@ -92,7 +115,7 @@ router.post('/', authenticate, async (req, res) => {
       `INSERT INTO pacientes (nome, cpf, telefone, clinica_id, ativo, data_cadastro)
        VALUES ($1, $2, $3, $4, true, NOW())
        RETURNING id, nome, cpf, telefone, clinica_id, data_cadastro`,
-      [nome, cpf, telefone || null, clinicaId]
+      [nome.trim(), cpfLimpo, telefone || null, clinicaIdFinal]
     );
 
     const paciente = resultado.rows[0];
@@ -109,7 +132,15 @@ router.post('/', authenticate, async (req, res) => {
     });
   } catch (erro) {
     console.error('Erro ao criar paciente:', erro);
-    res.status(500).json({ error: erro.message });
+
+    if (erro.code === '23505') {
+      return res.status(400).json({ error: 'CPF já está cadastrado' });
+    }
+    if (erro.code === '23503') {
+      return res.status(400).json({ error: 'Clínica não existe' });
+    }
+
+    res.status(500).json({ error: 'Erro interno ao criar paciente' });
   }
 });
 

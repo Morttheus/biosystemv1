@@ -48,19 +48,36 @@ class ApiService {
       const response = await fetch(`${API_URL}${endpoint}`, options);
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({}));
+
+        // Tratamento específico para token expirado/inválido
+        if (response.status === 401) {
+          this.clearToken();
+          throw new Error('Sessão expirada. Por favor, faça login novamente.');
+        }
+
+        // Tratamento para acesso negado
+        if (response.status === 403) {
+          throw new Error(error.error || 'Você não tem permissão para realizar esta ação.');
+        }
+
+        // Tratamento para não encontrado
+        if (response.status === 404) {
+          throw new Error(error.error || 'Recurso não encontrado.');
+        }
+
         throw new Error(error.error || `Erro ${response.status}`);
       }
 
       return await response.json();
     } catch (error) {
       console.error('❌ Erro na requisição:', error);
-      
+
       // Trata erro de conectividade
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
         throw new Error(`Não conseguiu conectar ao servidor (${API_URL}). Verifique se o backend está rodando.`);
       }
-      
+
       throw error;
     }
   }
@@ -135,10 +152,11 @@ class ApiService {
 
   // ========== PRONTUÁRIOS ==========
   async listarProntuarios(pacienteId = null, clinicaId = null) {
-    let query = '?';
-    if (pacienteId) query += `paciente_id=${pacienteId}`;
-    if (clinicaId) query += `clinica_id=${clinicaId}`;
-    return this.request('GET', `/prontuarios${query === '?' ? '' : query}`);
+    const params = [];
+    if (pacienteId) params.push(`paciente_id=${pacienteId}`);
+    if (clinicaId) params.push(`clinica_id=${clinicaId}`);
+    const query = params.length > 0 ? `?${params.join('&')}` : '';
+    return this.request('GET', `/prontuarios${query}`);
   }
 
   async criarProntuario(dados) {
@@ -176,10 +194,11 @@ class ApiService {
 
   // ========== FILA DE ATENDIMENTO ==========
   async listarFila(clinicaId = null, status = null) {
-    let query = '?';
-    if (clinicaId) query += `clinica_id=${clinicaId}&`;
-    if (status) query += `status=${status}`;
-    return this.request('GET', `/fila-atendimento${query === '?' ? '' : query}`);
+    const params = [];
+    if (clinicaId) params.push(`clinica_id=${clinicaId}`);
+    if (status) params.push(`status=${status}`);
+    const query = params.length > 0 ? `?${params.join('&')}` : '';
+    return this.request('GET', `/fila-atendimento${query}`);
   }
 
   async adicionarFila(dados) {

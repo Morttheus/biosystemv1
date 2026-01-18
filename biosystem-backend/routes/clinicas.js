@@ -12,13 +12,25 @@ router.get('/', authenticate, async (req, res) => {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
-    
+
     const resultado = await pool.query(
       `SELECT id, nome, endereco, telefone, email, cnpj, ativo, data_cadastro
        FROM clinicas WHERE ativo = true ORDER BY nome ASC`
     );
 
-    res.json(resultado.rows);
+    // Mapear para formato consistente (ativa em vez de ativo)
+    const clinicas = resultado.rows.map(c => ({
+      id: c.id,
+      nome: c.nome,
+      endereco: c.endereco,
+      telefone: c.telefone,
+      email: c.email,
+      cnpj: c.cnpj,
+      ativa: c.ativo,
+      dataCadastro: c.data_cadastro
+    }));
+
+    res.json(clinicas);
   } catch (erro) {
     console.error('Erro ao listar clínicas:', erro);
     res.status(500).json({ error: erro.message });
@@ -51,15 +63,29 @@ router.post('/', authenticate, async (req, res) => {
     const { nome, endereco, telefone, email, cnpj } = req.body;
     console.log('📝 [POST /clinicas] Recebido:', { nome, endereco, telefone, email, cnpj });
 
-    if (!nome) {
+    // Validações
+    if (!nome || !nome.trim()) {
       return res.status(400).json({ error: 'Nome é obrigatório' });
     }
 
+    // Validação de email (se fornecido)
+    if (email && email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Formato de email inválido' });
+      }
+    }
+
     // Verifica se CNPJ já existe e está ATIVO (se fornecido)
-    if (cnpj) {
+    if (cnpj && cnpj.trim()) {
+      const cnpjLimpo = cnpj.replace(/\D/g, '');
+      if (cnpjLimpo.length !== 14) {
+        return res.status(400).json({ error: 'CNPJ deve conter 14 dígitos' });
+      }
+
       const cnpjExiste = await pool.query(
         'SELECT id FROM clinicas WHERE cnpj = $1 AND ativo = true',
-        [cnpj]
+        [cnpj.trim()]
       );
       if (cnpjExiste.rows.length > 0) {
         return res.status(400).json({ error: 'CNPJ já cadastrado' });
@@ -70,18 +96,33 @@ router.post('/', authenticate, async (req, res) => {
       `INSERT INTO clinicas (nome, endereco, telefone, email, cnpj, ativo, data_cadastro)
        VALUES ($1, $2, $3, $4, $5, true, NOW())
        RETURNING id, nome, endereco, telefone, email, cnpj, ativo, data_cadastro`,
-      [nome, endereco || null, telefone || null, email || null, cnpj || null]
+      [nome.trim(), endereco || null, telefone || null, email?.trim()?.toLowerCase() || null, cnpj?.trim() || null]
     );
 
-    console.log('✅ [POST /clinicas] Clínica criada:', resultado.rows[0]);
+    const clinica = resultado.rows[0];
+    console.log('✅ [POST /clinicas] Clínica criada:', clinica);
 
     res.status(201).json({
       message: 'Clínica criada com sucesso',
-      clinica: resultado.rows[0]
+      clinica: {
+        id: clinica.id,
+        nome: clinica.nome,
+        endereco: clinica.endereco,
+        telefone: clinica.telefone,
+        email: clinica.email,
+        cnpj: clinica.cnpj,
+        ativa: clinica.ativo,
+        dataCadastro: clinica.data_cadastro
+      }
     });
   } catch (erro) {
     console.error('❌ [POST /clinicas] Erro ao criar clínica:', erro);
-    res.status(500).json({ error: erro.message });
+
+    if (erro.code === '23505') {
+      return res.status(400).json({ error: 'CNPJ já está cadastrado' });
+    }
+
+    res.status(500).json({ error: 'Erro interno ao criar clínica' });
   }
 });
 

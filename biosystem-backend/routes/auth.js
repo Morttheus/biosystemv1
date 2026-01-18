@@ -12,12 +12,48 @@ router.post('/registrar', async (req, res) => {
   try {
     const { nome, email, senha, tipo, clinicaId, telefone } = req.body;
 
-    if (!nome || !email || !senha || !telefone) {
-      return res.status(400).json({ error: 'Nome, email, senha e telefone são obrigatórios' });
+    // ✅ VALIDAÇÕES DE CAMPOS OBRIGATÓRIOS
+    if (!nome || !nome.trim()) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+    if (!email || !email.trim()) {
+      return res.status(400).json({ error: 'Email é obrigatório' });
+    }
+    if (!senha || senha.length < 6) {
+      return res.status(400).json({ error: 'Senha é obrigatória e deve ter pelo menos 6 caracteres' });
+    }
+    if (!telefone || !telefone.trim()) {
+      return res.status(400).json({ error: 'Telefone é obrigatório' });
+    }
+
+    // ✅ VALIDAÇÃO DE FORMATO DE EMAIL
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Formato de email inválido' });
+    }
+
+    // ✅ VALIDAÇÃO DE TIPO DE USUÁRIO
+    const tiposValidos = ['master', 'admin', 'usuario', 'medico', 'painel'];
+    const tipoUsuario = tipo || 'usuario';
+    if (!tiposValidos.includes(tipoUsuario)) {
+      return res.status(400).json({
+        error: `Tipo de usuário inválido. Valores permitidos: ${tiposValidos.join(', ')}`
+      });
+    }
+
+    // ✅ VERIFICA SE CLINICA_ID EXISTE (se fornecido)
+    if (clinicaId) {
+      const clinicaExiste = await pool.query(
+        'SELECT id FROM clinicas WHERE id = $1 AND ativo = true',
+        [clinicaId]
+      );
+      if (clinicaExiste.rows.length === 0) {
+        return res.status(400).json({ error: 'Clínica não encontrada ou inativa' });
+      }
     }
 
     // Verifica se email já existe e está ativo
-    const emailExiste = await pool.query('SELECT id FROM usuarios WHERE email = $1 AND ativo = true', [email]);
+    const emailExiste = await pool.query('SELECT id FROM usuarios WHERE email = $1 AND ativo = true', [email.trim().toLowerCase()]);
     if (emailExiste.rows.length > 0) {
       return res.status(400).json({ error: 'Este email já está cadastrado' });
     }
@@ -30,7 +66,7 @@ router.post('/registrar', async (req, res) => {
       `INSERT INTO usuarios (nome, email, senha, tipo, clinica_id, telefone, ativo, data_criacao)
        VALUES ($1, $2, $3, $4, $5, $6, true, NOW())
        RETURNING id, nome, email, tipo, clinica_id, telefone, ativo`,
-      [nome, email, senhaHash, tipo || 'usuario', clinicaId || null, telefone]
+      [nome.trim(), email.trim().toLowerCase(), senhaHash, tipoUsuario, clinicaId || null, telefone.trim()]
     );
 
     const usuario = resultado.rows[0];
@@ -44,12 +80,26 @@ router.post('/registrar', async (req, res) => {
 
     res.json({
       message: 'Usuário registrado com sucesso',
-      usuario,
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        tipo: usuario.tipo,
+        clinicaId: usuario.clinica_id,
+        telefone: usuario.telefone,
+        ativo: usuario.ativo
+      },
       token
     });
   } catch (erro) {
     console.error('Erro ao registrar:', erro);
-    res.status(500).json({ error: erro.message });
+
+    // Tratamento específico para constraint violations
+    if (erro.code === '23505') { // unique_violation
+      return res.status(400).json({ error: 'Email já está em uso' });
+    }
+
+    res.status(500).json({ error: 'Erro interno ao registrar usuário' });
   }
 });
 
@@ -160,8 +210,8 @@ router.post('/forgot-password', async (req, res) => {
     const usuario = resultado.rows[0];
 
     // Gera senha temporária (8 caracteres)
-    const novaSenh = Math.random().toString(36).slice(-8).toUpperCase();
-    const senhaHash = await bcrypt.hash(novaSenh, 10);
+    const novaSenha = Math.random().toString(36).slice(-8).toUpperCase();
+    const senhaHash = await bcrypt.hash(novaSenha, 10);
 
     // Atualiza senha no banco
     await pool.query(
@@ -170,13 +220,13 @@ router.post('/forgot-password', async (req, res) => {
     );
 
     // TODO: Integrar SMTP ou SMS aqui para enviar a nova senha
-    // Por enquanto, retorna a senha (APENAS PARA TESTES - remover em produção!)
-    console.log(`\n📧 Nova senha para ${usuario.email}: ${novaSenh}\n`);
+    // Log apenas em desenvolvimento (não expõe em produção)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`\n📧 [DEV] Nova senha para ${usuario.email}: ${novaSenha}\n`);
+    }
 
     res.json({
-      message: `Nova senha enviada para ${usuario.email}. Verifique seu email ou SMS.`,
-      // Remover isso em produção - apenas para testes:
-      novaSenhaTemp: novaSenh
+      message: `Nova senha enviada para ${usuario.email}. Verifique seu email ou SMS.`
     });
   } catch (erro) {
     console.error('Erro ao solicitar nova senha:', erro);

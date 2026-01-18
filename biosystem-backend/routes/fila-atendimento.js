@@ -43,17 +43,52 @@ router.get('/', authenticate, async (req, res) => {
 // ➕ ADICIONAR À FILA
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { pacienteId, pacienteNome, clinicaId } = req.body;
+    const { pacienteId, pacienteNome, clinicaId, medicoId, medicoNome } = req.body;
 
-    if (!pacienteId || !pacienteNome || !clinicaId) {
-      return res.status(400).json({ error: 'Paciente, nome e clínica são obrigatórios' });
+    // Validações
+    if (!pacienteId) {
+      return res.status(400).json({ error: 'ID do paciente é obrigatório' });
+    }
+    if (!pacienteNome || !pacienteNome.trim()) {
+      return res.status(400).json({ error: 'Nome do paciente é obrigatório' });
+    }
+    if (!clinicaId) {
+      return res.status(400).json({ error: 'ID da clínica é obrigatório' });
+    }
+
+    // Verifica se paciente existe
+    const pacienteExiste = await pool.query(
+      'SELECT id FROM pacientes WHERE id = $1 AND ativo = true',
+      [pacienteId]
+    );
+    if (pacienteExiste.rows.length === 0) {
+      return res.status(400).json({ error: 'Paciente não encontrado ou inativo' });
+    }
+
+    // Verifica se clínica existe
+    const clinicaExiste = await pool.query(
+      'SELECT id FROM clinicas WHERE id = $1 AND ativo = true',
+      [clinicaId]
+    );
+    if (clinicaExiste.rows.length === 0) {
+      return res.status(400).json({ error: 'Clínica não encontrada ou inativa' });
+    }
+
+    // Verifica se paciente já está na fila (aguardando ou atendendo)
+    const jaEmFila = await pool.query(
+      `SELECT id FROM fila_atendimento
+       WHERE paciente_id = $1 AND clinica_id = $2 AND status IN ('aguardando', 'atendendo')`,
+      [pacienteId, clinicaId]
+    );
+    if (jaEmFila.rows.length > 0) {
+      return res.status(400).json({ error: 'Paciente já está na fila de atendimento' });
     }
 
     const resultado = await pool.query(
-      `INSERT INTO fila_atendimento (paciente_id, paciente_nome, clinica_id, status, horario_chegada)
-       VALUES ($1, $2, $3, 'aguardando', NOW())
-       RETURNING id, paciente_id, paciente_nome, clinica_id, status, horario_chegada`,
-      [pacienteId, pacienteNome, clinicaId]
+      `INSERT INTO fila_atendimento (paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada)
+       VALUES ($1, $2, $3, $4, $5, 'aguardando', NOW())
+       RETURNING id, paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada`,
+      [pacienteId, pacienteNome.trim(), medicoId || null, medicoNome || null, clinicaId]
     );
 
     res.status(201).json({
@@ -62,7 +97,12 @@ router.post('/', authenticate, async (req, res) => {
     });
   } catch (erro) {
     console.error('Erro ao adicionar à fila:', erro);
-    res.status(500).json({ error: erro.message });
+
+    if (erro.code === '23503') {
+      return res.status(400).json({ error: 'Paciente ou clínica não existe' });
+    }
+
+    res.status(500).json({ error: 'Erro interno ao adicionar à fila' });
   }
 });
 
@@ -72,10 +112,27 @@ router.put('/:id', authenticate, async (req, res) => {
     const { id } = req.params;
     const { status, medicoId, medicoNome } = req.body;
 
+    // Validação de status
+    const statusValidos = ['aguardando', 'atendendo', 'atendido', 'cancelado'];
+    if (status && !statusValidos.includes(status)) {
+      return res.status(400).json({
+        error: `Status inválido. Valores permitidos: ${statusValidos.join(', ')}`
+      });
+    }
+
+    // Verifica se registro existe
+    const registroExiste = await pool.query(
+      'SELECT id, status FROM fila_atendimento WHERE id = $1',
+      [id]
+    );
+    if (registroExiste.rows.length === 0) {
+      return res.status(404).json({ error: 'Registro de fila não encontrado' });
+    }
+
     const valores = [status || null, medicoId || null, medicoNome || null, id];
 
     const resultado = await pool.query(
-      `UPDATE fila_atendimento 
+      `UPDATE fila_atendimento
        SET status = COALESCE($1, status),
            medico_id = COALESCE($2, medico_id),
            medico_nome = COALESCE($3, medico_nome),
@@ -85,17 +142,13 @@ router.put('/:id', authenticate, async (req, res) => {
       valores
     );
 
-    if (resultado.rows.length === 0) {
-      return res.status(404).json({ error: 'Fila não encontrada' });
-    }
-
     res.json({
       message: 'Fila atualizada com sucesso',
       filaAtendimento: resultado.rows[0]
     });
   } catch (erro) {
     console.error('Erro ao atualizar fila:', erro);
-    res.status(500).json({ error: erro.message });
+    res.status(500).json({ error: 'Erro interno ao atualizar fila' });
   }
 });
 

@@ -75,14 +75,30 @@ router.post('/', authenticate, async (req, res) => {
   try {
     const { nome, crm, especialidade, clinicaId } = req.body;
 
-    if (!nome || !crm || !clinicaId) {
-      return res.status(400).json({ error: 'Nome, CRM e clínica são obrigatórios' });
+    // Validações
+    if (!nome || !nome.trim()) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+    if (!crm || !crm.trim()) {
+      return res.status(400).json({ error: 'CRM é obrigatório' });
+    }
+    if (!clinicaId) {
+      return res.status(400).json({ error: 'Clínica é obrigatória' });
+    }
+
+    // Verifica se clínica existe
+    const clinicaExiste = await pool.query(
+      'SELECT id FROM clinicas WHERE id = $1 AND ativo = true',
+      [clinicaId]
+    );
+    if (clinicaExiste.rows.length === 0) {
+      return res.status(400).json({ error: 'Clínica não encontrada ou inativa' });
     }
 
     // Verifica se CRM já existe
     const crmExiste = await pool.query(
       'SELECT id FROM medicos WHERE crm = $1 AND ativo = true',
-      [crm]
+      [crm.trim()]
     );
 
     if (crmExiste.rows.length > 0) {
@@ -93,7 +109,7 @@ router.post('/', authenticate, async (req, res) => {
       `INSERT INTO medicos (nome, crm, especialidade, clinica_id, ativo, data_cadastro)
        VALUES ($1, $2, $3, $4, true, NOW())
        RETURNING id, nome, crm, especialidade, clinica_id, ativo, data_cadastro`,
-      [nome, crm, especialidade || null, clinicaId]
+      [nome.trim(), crm.trim(), especialidade || null, clinicaId]
     );
 
     const medico = resultado.rows[0];
@@ -111,7 +127,15 @@ router.post('/', authenticate, async (req, res) => {
     });
   } catch (erro) {
     console.error('Erro ao criar médico:', erro);
-    res.status(500).json({ error: erro.message });
+
+    if (erro.code === '23505') {
+      return res.status(400).json({ error: 'CRM já está cadastrado' });
+    }
+    if (erro.code === '23503') {
+      return res.status(400).json({ error: 'Clínica não existe' });
+    }
+
+    res.status(500).json({ error: 'Erro interno ao criar médico' });
   }
 });
 

@@ -212,6 +212,54 @@ router.delete('/:id', authenticate, async (req, res) => {
 router.post('/', authenticate, async (req, res) => {
   try {
     const { nome, email, senha, tipo, clinicaId, telefone } = req.body;
+
+    // ⚠️ AUTORIZAÇÃO: Apenas MASTER pode criar usuários
+    if (req.usuario.tipo !== 'master' && req.usuario.tipo !== 'admin') {
+      return res.status(403).json({
+        error: 'Apenas Master ou Admin podem criar novos usuários'
+      });
+    }
+
+    // ✅ VALIDAÇÕES DE CAMPOS OBRIGATÓRIOS
+    if (!nome || !nome.trim()) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+    if (!email || !email.trim()) {
+      return res.status(400).json({ error: 'Email é obrigatório' });
+    }
+    if (!senha || senha.length < 6) {
+      return res.status(400).json({ error: 'Senha é obrigatória e deve ter pelo menos 6 caracteres' });
+    }
+    if (!telefone || !telefone.trim()) {
+      return res.status(400).json({ error: 'Telefone é obrigatório' });
+    }
+
+    // ✅ VALIDAÇÃO DE FORMATO DE EMAIL
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Formato de email inválido' });
+    }
+
+    // ✅ VALIDAÇÃO DE TIPO DE USUÁRIO
+    const tiposValidos = ['master', 'admin', 'usuario', 'medico', 'painel'];
+    const tipoUsuario = tipo || 'usuario';
+    if (!tiposValidos.includes(tipoUsuario)) {
+      return res.status(400).json({
+        error: `Tipo de usuário inválido. Valores permitidos: ${tiposValidos.join(', ')}`
+      });
+    }
+
+    // ✅ VERIFICA SE CLINICA_ID EXISTE (se fornecido)
+    if (clinicaId) {
+      const clinicaExiste = await pool.query(
+        'SELECT id FROM clinicas WHERE id = $1 AND ativo = true',
+        [clinicaId]
+      );
+      if (clinicaExiste.rows.length === 0) {
+        return res.status(400).json({ error: 'Clínica não encontrada ou inativa' });
+      }
+    }
+
     // Verifica se já existe usuário ativo com mesmo email
     const existe = await pool.query(
       'SELECT id FROM usuarios WHERE email = $1 AND ativo = true',
@@ -220,18 +268,42 @@ router.post('/', authenticate, async (req, res) => {
     if (existe.rows.length > 0) {
       return res.status(400).json({ error: 'Já existe um usuário ativo com este email' });
     }
+
     const senhaHash = await bcrypt.hash(senha, 10);
     const resultado = await pool.query(
       `INSERT INTO usuarios (nome, email, senha, tipo, clinica_id, telefone, ativo, data_criacao)
        VALUES ($1, $2, $3, $4, $5, $6, true, NOW())
        RETURNING id, nome, email, tipo, clinica_id, telefone, ativo`,
-      [nome, email, senhaHash, tipo, clinicaId, telefone]
+      [nome.trim(), email.trim().toLowerCase(), senhaHash, tipoUsuario, clinicaId || null, telefone.trim()]
     );
+
     const novoUsuario = resultado.rows[0];
-    res.status(201).json({ message: 'Usuário criado com sucesso', usuario: novoUsuario });
+
+    // ✅ RESPOSTA MAPEADA PARA CAMELCASE (consistente com outras rotas)
+    res.status(201).json({
+      message: 'Usuário criado com sucesso',
+      usuario: {
+        id: novoUsuario.id,
+        nome: novoUsuario.nome,
+        email: novoUsuario.email,
+        tipo: novoUsuario.tipo,
+        clinicaId: novoUsuario.clinica_id,
+        telefone: novoUsuario.telefone,
+        ativo: novoUsuario.ativo
+      }
+    });
   } catch (erro) {
     console.error('Erro ao criar usuário:', erro);
-    res.status(500).json({ error: erro.message });
+
+    // Tratamento específico para constraint violations
+    if (erro.code === '23505') { // unique_violation
+      return res.status(400).json({ error: 'Email já está em uso' });
+    }
+    if (erro.code === '23503') { // foreign_key_violation
+      return res.status(400).json({ error: 'Clínica referenciada não existe' });
+    }
+
+    res.status(500).json({ error: 'Erro interno ao criar usuário' });
   }
 });
 
