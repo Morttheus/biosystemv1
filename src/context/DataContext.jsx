@@ -46,7 +46,7 @@ export const DataProvider = ({ children }) => {
   // Carregar médicos da API
   const carregarMedicos = async () => {
     try {
-      const clinicaId = usuarioLogado?.clinica_id;
+      const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
       const lista = await apiService.listarMedicos(clinicaId);
       setMedicos(lista);
     } catch (err) {
@@ -73,7 +73,7 @@ export const DataProvider = ({ children }) => {
   // Carregar pacientes e prontuários
   const carregarPacientes = async () => {
     try {
-      const clinicaId = usuarioLogado?.clinica_id;
+      const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
       const lista = await apiService.listarPacientes(clinicaId);
       setPacientes(lista);
     } catch (err) {
@@ -84,7 +84,7 @@ export const DataProvider = ({ children }) => {
 
   const carregarProntuarios = async () => {
     try {
-      const clinicaId = usuarioLogado?.clinica_id;
+      const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
       const lista = await apiService.listarProntuarios(null, clinicaId);
       setProntuarios(lista);
     } catch (err) {
@@ -111,7 +111,7 @@ export const DataProvider = ({ children }) => {
   // Carregar fila de atendimento
   const carregarFila = async () => {
     try {
-      const clinicaId = usuarioLogado?.clinica_id;
+      const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
       const lista = await apiService.listarFila(clinicaId);
       setFilaAtendimento(lista);
     } catch (err) {
@@ -248,10 +248,15 @@ export const DataProvider = ({ children }) => {
 
   const cadastrarPaciente = async (dadosPaciente) => {
     try {
-      const clinicaId = usuarioLogado?.clinica_id || 1;
+      const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
+
+      if (!clinicaId) {
+        throw new Error('Usuário não está associado a uma clínica');
+      }
+
       const resultado = await apiService.criarPaciente({
         ...dadosPaciente,
-        clinica_id: clinicaId,
+        clinicaId: clinicaId,
       });
 
       if (resultado.paciente) {
@@ -289,7 +294,7 @@ export const DataProvider = ({ children }) => {
     try {
       const paciente = pacientes.find(p => p.id === pacienteId);
       const medico = medicos.find(m => m.id === medicoId);
-      const clinicaId = clinicaIdParam || usuarioLogado?.clinica_id || 1;
+      const clinicaId = clinicaIdParam || usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
 
       const resultado = await apiService.adicionarFila({
         pacienteId,
@@ -343,11 +348,11 @@ export const DataProvider = ({ children }) => {
       if (!atendimento) return null;
 
       // Cria registro no prontuário via API
-      const clinicaId = usuarioLogado?.clinica_id || 1;
+      const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
       const resultadoProntuario = await apiService.criarProntuario({
-        paciente_id: atendimento.paciente_id,
-        medico_id: atendimento.medico_id,
-        clinica_id: clinicaId,
+        pacienteId: atendimento.paciente_id,
+        medicoId: atendimento.medico_id,
+        clinicaId: clinicaId,
         descricao: JSON.stringify({
           diagnostico: dadosConsulta.diagnostico || '',
           prescricao: dadosConsulta.prescricao || '',
@@ -396,10 +401,10 @@ export const DataProvider = ({ children }) => {
 
   const criarProntuario = async (dados) => {
     try {
-      const clinicaId = usuarioLogado?.clinica_id || 1;
+      const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
       const resultado = await apiService.criarProntuario({
         ...dados,
-        clinica_id: clinicaId,
+        clinicaId: clinicaId,
       });
 
       if (resultado.prontuario) {
