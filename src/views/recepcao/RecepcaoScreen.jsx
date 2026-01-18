@@ -15,7 +15,8 @@ import {
   CheckCircle,
   AlertCircle,
   Phone,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 
 const RecepcaoScreen = () => {
@@ -35,6 +36,7 @@ const RecepcaoScreen = () => {
   const [cpfBusca, setCpfBusca] = useState('');
   const [pacienteEncontrado, setPacienteEncontrado] = useState(null);
   const [mensagem, setMensagem] = useState({ tipo: '', texto: '' });
+  const [carregando, setCarregando] = useState(false);
 
   const [form, setForm] = useState({
     nome: '',
@@ -48,15 +50,21 @@ const RecepcaoScreen = () => {
     procedimentoId: '',
   });
 
-  // Clínica do usuário logado
-  const clinicaId = usuarioLogado?.clinicaId || 1;
+  // Clínica do usuário logado (suporta ambos formatos)
+  const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
   const clinicaAtual = clinicas.find(c => c.id === clinicaId);
 
-  // Médicos da clínica
-  const medicosClinica = medicos.filter(m => m.clinicaId === clinicaId);
+  // Médicos da clínica (suporta ambos formatos de campo)
+  const medicosClinica = medicos.filter(m => {
+    const medicoClinicaId = m.clinicaId || m.clinica_id;
+    return medicoClinicaId === clinicaId;
+  });
 
-  // Fila da clínica
-  const filaClinica = filaAtendimento.filter(a => a.clinicaId === clinicaId && a.status !== 'atendido');
+  // Fila da clínica (suporta ambos formatos de campo e status)
+  const filaClinica = filaAtendimento.filter(a => {
+    const atendClinicaId = a.clinicaId || a.clinica_id;
+    return atendClinicaId === clinicaId && a.status !== 'atendido';
+  });
 
   const formatarCPF = (valor) => {
     const numeros = valor.replace(/\D/g, '');
@@ -82,88 +90,139 @@ const RecepcaoScreen = () => {
     return valor;
   };
 
-  const handleBuscarCPF = () => {
+  const handleBuscarCPF = async () => {
     if (!cpfBusca) return;
 
-    const paciente = buscarPacientePorCPF(cpfBusca);
-    if (paciente) {
-      setPacienteEncontrado(paciente);
-      setMensagem({ tipo: 'sucesso', texto: 'Paciente encontrado!' });
-      // Preenche o formulário com os dados do paciente
+    setCarregando(true);
+    setMensagem({ tipo: '', texto: '' });
+
+    try {
+      // Remove formatação do CPF para busca
+      const cpfLimpo = cpfBusca.replace(/\D/g, '');
+      const paciente = await buscarPacientePorCPF(cpfLimpo);
+
+      if (paciente) {
+        setPacienteEncontrado(paciente);
+        setMensagem({ tipo: 'sucesso', texto: 'Paciente encontrado!' });
+        // Preenche o formulário com os dados do paciente
+        setForm({
+          ...form,
+          nome: paciente.nome,
+          cpf: paciente.cpf,
+          dataNascimento: paciente.dataNascimento || '',
+          telefone: paciente.telefone || '',
+          email: paciente.email || '',
+          endereco: paciente.endereco || '',
+          convenio: paciente.convenio || '',
+        });
+      } else {
+        setPacienteEncontrado(null);
+        // Preenche o CPF no formulário para facilitar o cadastro
+        setForm({
+          ...form,
+          cpf: cpfLimpo,
+        });
+        setMensagem({ tipo: 'info', texto: 'Paciente não encontrado. Preencha os dados para cadastrar.' });
+      }
+    } catch (err) {
+      setPacienteEncontrado(null);
+      // Preenche o CPF no formulário para facilitar o cadastro
       setForm({
         ...form,
-        nome: paciente.nome,
-        cpf: paciente.cpf,
-        dataNascimento: paciente.dataNascimento || '',
-        telefone: paciente.telefone || '',
-        email: paciente.email || '',
-        endereco: paciente.endereco || '',
-        convenio: paciente.convenio || '',
+        cpf: cpfBusca.replace(/\D/g, ''),
       });
-    } else {
-      setPacienteEncontrado(null);
       setMensagem({ tipo: 'info', texto: 'Paciente não encontrado. Preencha os dados para cadastrar.' });
+    } finally {
+      setCarregando(false);
     }
   };
 
-  const handleCadastrar = () => {
+  const handleCadastrar = async () => {
     if (!form.nome || !form.cpf) {
       setMensagem({ tipo: 'erro', texto: 'Nome e CPF são obrigatórios!' });
       return;
     }
 
-    const resultado = cadastrarPaciente({
-      nome: form.nome,
-      cpf: form.cpf,
-      dataNascimento: form.dataNascimento,
-      telefone: form.telefone,
-      email: form.email,
-      endereco: form.endereco,
-      convenio: form.convenio,
-    });
+    if (!clinicaId) {
+      setMensagem({ tipo: 'erro', texto: 'Usuário não está associado a uma clínica!' });
+      return;
+    }
 
-    if (resultado.success) {
-      setPacienteEncontrado(resultado.paciente);
-      setMensagem({ tipo: 'sucesso', texto: `Paciente cadastrado com sucesso! Prontuário: ${resultado.paciente.prontuarioId}` });
-    } else {
-      setPacienteEncontrado(resultado.paciente);
-      setMensagem({ tipo: 'aviso', texto: resultado.error });
+    setCarregando(true);
+    setMensagem({ tipo: '', texto: '' });
+
+    try {
+      const resultado = await cadastrarPaciente({
+        nome: form.nome,
+        cpf: form.cpf.replace(/\D/g, ''), // Remove formatação
+        dataNascimento: form.dataNascimento,
+        telefone: form.telefone.replace(/\D/g, ''), // Remove formatação
+        email: form.email,
+        endereco: form.endereco,
+        convenio: form.convenio,
+      });
+
+      if (resultado.success) {
+        setPacienteEncontrado(resultado.paciente);
+        setMensagem({ tipo: 'sucesso', texto: `Paciente cadastrado com sucesso!` });
+      } else {
+        setMensagem({ tipo: 'aviso', texto: resultado.error });
+      }
+    } catch (err) {
+      setMensagem({ tipo: 'erro', texto: err.message || 'Erro ao cadastrar paciente' });
+    } finally {
+      setCarregando(false);
     }
   };
 
-  const handleAdicionarFila = () => {
+  const handleAdicionarFila = async () => {
     if (!pacienteEncontrado) {
       setMensagem({ tipo: 'erro', texto: 'Busque ou cadastre um paciente primeiro!' });
       return;
     }
-    if (!form.medicoId || !form.procedimentoId) {
-      setMensagem({ tipo: 'erro', texto: 'Selecione o médico e o procedimento!' });
+    if (!form.medicoId) {
+      setMensagem({ tipo: 'erro', texto: 'Selecione o médico!' });
+      return;
+    }
+    if (!clinicaId) {
+      setMensagem({ tipo: 'erro', texto: 'Usuário não está associado a uma clínica!' });
       return;
     }
 
-    const atendimento = adicionarNaFila(
-      pacienteEncontrado.id,
-      parseInt(form.medicoId),
-      parseInt(form.procedimentoId),
-      clinicaId
-    );
+    setCarregando(true);
+    setMensagem({ tipo: '', texto: '' });
 
-    if (atendimento) {
-      setMensagem({ tipo: 'sucesso', texto: 'Paciente adicionado à fila de atendimento!' });
-      // Limpa o formulário
-      setForm({
-        nome: '',
-        cpf: '',
-        dataNascimento: '',
-        telefone: '',
-        email: '',
-        endereco: '',
-        convenio: '',
-        medicoId: '',
-        procedimentoId: '',
-      });
-      setPacienteEncontrado(null);
-      setCpfBusca('');
+    try {
+      const atendimento = await adicionarNaFila(
+        pacienteEncontrado.id,
+        parseInt(form.medicoId),
+        form.procedimentoId ? parseInt(form.procedimentoId) : null,
+        clinicaId
+      );
+
+      if (atendimento) {
+        setMensagem({ tipo: 'sucesso', texto: 'Paciente adicionado à fila de atendimento!' });
+        // Limpa o formulário
+        setForm({
+          nome: '',
+          cpf: '',
+          dataNascimento: '',
+          telefone: '',
+          email: '',
+          endereco: '',
+          convenio: '',
+          medicoId: '',
+          procedimentoId: '',
+        });
+        setPacienteEncontrado(null);
+        setCpfBusca('');
+      } else {
+        setMensagem({ tipo: 'erro', texto: 'Erro ao adicionar à fila. Tente novamente.' });
+      }
+    } catch (err) {
+      setMensagem({ tipo: 'erro', texto: err.message || 'Erro ao adicionar à fila' });
+    } finally {
+      setCarregando(false);
     }
   };
 
@@ -247,8 +306,8 @@ const RecepcaoScreen = () => {
                   className="flex-1"
                 />
                 <div className="flex items-end">
-                  <Button icon={Search} onClick={handleBuscarCPF}>
-                    Buscar
+                  <Button icon={carregando ? Loader2 : Search} onClick={handleBuscarCPF} disabled={carregando}>
+                    {carregando ? 'Buscando...' : 'Buscar'}
                   </Button>
                 </div>
               </div>
@@ -257,7 +316,7 @@ const RecepcaoScreen = () => {
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <h4 className="font-semibold text-green-800 mb-2">Paciente Encontrado</h4>
                   <p><strong>Nome:</strong> {pacienteEncontrado.nome}</p>
-                  <p><strong>Prontuário:</strong> {pacienteEncontrado.prontuarioId}</p>
+                  <p><strong>ID:</strong> {pacienteEncontrado.id}</p>
                   <p><strong>Telefone:</strong> {pacienteEncontrado.telefone || '-'}</p>
                 </div>
               )}
@@ -317,8 +376,8 @@ const RecepcaoScreen = () => {
                 />
 
                 {!pacienteEncontrado && (
-                  <Button icon={UserPlus} fullWidth onClick={handleCadastrar}>
-                    Cadastrar Paciente
+                  <Button icon={carregando ? Loader2 : UserPlus} fullWidth onClick={handleCadastrar} disabled={carregando}>
+                    {carregando ? 'Cadastrando...' : 'Cadastrar Paciente'}
                   </Button>
                 )}
               </div>
@@ -346,13 +405,13 @@ const RecepcaoScreen = () => {
                 />
                 <div className="flex items-end">
                   <Button
-                    icon={Clock}
+                    icon={carregando ? Loader2 : Clock}
                     fullWidth
                     variant="success"
                     onClick={handleAdicionarFila}
-                    disabled={!pacienteEncontrado}
+                    disabled={!pacienteEncontrado || carregando}
                   >
-                    Adicionar à Fila
+                    {carregando ? 'Adicionando...' : 'Adicionar à Fila'}
                   </Button>
                 </div>
               </div>
@@ -364,44 +423,52 @@ const RecepcaoScreen = () => {
         {abaAtiva === 'fila' && (
           <Card title="Fila de Atendimento">
             <div className="space-y-3">
-              {filaClinica.map((atendimento, index) => (
+              {filaClinica.map((atendimento, index) => {
+                // Suporta ambos os formatos de campo (camelCase e snake_case)
+                const pacienteNome = atendimento.pacienteNome || atendimento.paciente_nome;
+                const medicoNome = atendimento.medicoNome || atendimento.medico_nome;
+                const status = atendimento.status;
+                const horarioChegada = atendimento.horarioChegada || atendimento.horario_chegada;
+
+                return (
                 <div
                   key={atendimento.id}
                   className={`flex items-center justify-between p-4 rounded-lg border ${
-                    atendimento.status === 'em_atendimento'
+                    status === 'atendendo'
                       ? 'bg-green-50 border-green-300'
                       : 'bg-gray-50 border-gray-200'
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                      atendimento.status === 'em_atendimento'
+                      status === 'atendendo'
                         ? 'bg-green-600 text-white'
                         : 'bg-blue-600 text-white'
                     }`}>
                       {index + 1}
                     </span>
                     <div>
-                      <h4 className="font-semibold">{atendimento.pacienteNome}</h4>
+                      <h4 className="font-semibold">{pacienteNome}</h4>
                       <p className="text-sm text-gray-500">
-                        Dr(a). {atendimento.medicoNome} - {atendimento.procedimentoNome}
+                        {medicoNome ? `Dr(a). ${medicoNome}` : 'Médico não atribuído'}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <span className={`px-3 py-1 rounded-full text-sm ${
-                      atendimento.status === 'em_atendimento'
+                      status === 'atendendo'
                         ? 'bg-green-600 text-white'
                         : 'bg-yellow-500 text-white'
                     }`}>
-                      {atendimento.status === 'em_atendimento' ? 'Em Atendimento' : 'Aguardando'}
+                      {status === 'atendendo' ? 'Em Atendimento' : 'Aguardando'}
                     </span>
                     <p className="text-xs text-gray-500 mt-1">
-                      Chegou: {formatarHora(atendimento.horarioChegada)}
+                      Chegou: {formatarHora(horarioChegada)}
                     </p>
                   </div>
                 </div>
-              ))}
+              );
+              })}
               {filaClinica.length === 0 && (
                 <div className="text-center py-12 text-gray-500">
                   <Users size={48} className="mx-auto mb-4 opacity-50" />
