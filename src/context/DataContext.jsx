@@ -470,14 +470,86 @@ export const DataProvider = ({ children }) => {
     setChamadas(prev => [novaChamada, ...prev]);
     setChamadaAtual(novaChamada);
 
+    // Salva no localStorage para sincronizar entre abas
+    try {
+      localStorage.setItem('biosystem_chamada_atual', JSON.stringify(novaChamada));
+    } catch (e) {
+      console.error('Erro ao salvar chamada no localStorage:', e);
+    }
+
     // Desativa a chamada após 30 segundos
     setTimeout(() => {
       setChamadaAtual(null);
       setChamadas(prev => prev.map(c => c.id === novaChamada.id ? { ...c, ativa: false } : c));
+      // Remove do localStorage
+      try {
+        localStorage.removeItem('biosystem_chamada_atual');
+      } catch (e) {
+        console.error('Erro ao remover chamada do localStorage:', e);
+      }
     }, 30000); // 30 segundos
 
     return novaChamada;
   };
+
+  // Escuta mudanças no localStorage para sincronizar chamadas entre abas
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      if (event.key === 'biosystem_chamada_atual') {
+        if (event.newValue) {
+          try {
+            const novaChamada = JSON.parse(event.newValue);
+            setChamadaAtual(novaChamada);
+            setChamadas(prev => {
+              // Adiciona se não existir
+              if (!prev.find(c => c.id === novaChamada.id)) {
+                return [novaChamada, ...prev];
+              }
+              return prev;
+            });
+          } catch (e) {
+            console.error('Erro ao processar chamada do localStorage:', e);
+          }
+        } else {
+          // Chamada foi removida/expirada
+          setChamadaAtual(null);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Verifica se há uma chamada ativa ao carregar
+    try {
+      const chamadaSalva = localStorage.getItem('biosystem_chamada_atual');
+      if (chamadaSalva) {
+        const chamada = JSON.parse(chamadaSalva);
+        // Verifica se a chamada ainda é válida (menos de 30 segundos)
+        const agora = new Date();
+        const dataChamada = new Date(chamada.dataHora);
+        const diffSegundos = (agora - dataChamada) / 1000;
+
+        if (diffSegundos < 30) {
+          setChamadaAtual(chamada);
+          setChamadas(prev => {
+            if (!prev.find(c => c.id === chamada.id)) {
+              return [chamada, ...prev];
+            }
+            return prev;
+          });
+        } else {
+          // Remove chamada expirada
+          localStorage.removeItem('biosystem_chamada_atual');
+        }
+      }
+    } catch (e) {
+      console.error('Erro ao carregar chamada do localStorage:', e);
+    }
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const obterChamadasDia = () => {
     const hoje = new Date().toDateString();

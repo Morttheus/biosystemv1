@@ -9,12 +9,51 @@ const SalaEsperaScreen = () => {
   useAuth(); // Necessário para obter clinicaId via getClinicaIdUsuario
   const [tempoRestante, setTempoRestante] = useState(30);
   const [exibirChamada, setExibirChamada] = useState(false);
+  const [chamadaLocal, setChamadaLocal] = useState(null);
 
   // Obtém a clínica do usuário painel
   const clinicaIdPainel = getClinicaIdUsuario();
 
+  // Polling para verificar localStorage (para sincronização em tempo real)
+  useEffect(() => {
+    const verificarChamada = () => {
+      try {
+        const chamadaSalva = localStorage.getItem('biosystem_chamada_atual');
+        if (chamadaSalva) {
+          const chamada = JSON.parse(chamadaSalva);
+          // Verifica se a chamada ainda é válida (menos de 30 segundos)
+          const agora = new Date();
+          const dataChamada = new Date(chamada.dataHora);
+          const diffSegundos = (agora - dataChamada) / 1000;
+
+          if (diffSegundos < 30) {
+            setChamadaLocal(chamada);
+          } else {
+            setChamadaLocal(null);
+            localStorage.removeItem('biosystem_chamada_atual');
+          }
+        } else {
+          setChamadaLocal(null);
+        }
+      } catch (e) {
+        console.error('Erro ao verificar chamada:', e);
+      }
+    };
+
+    // Verifica imediatamente
+    verificarChamada();
+
+    // Polling a cada 500ms para capturar chamadas rapidamente
+    const interval = setInterval(verificarChamada, 500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Usa chamadaLocal do localStorage OU chamadaAtual do context
+  const chamadaAtiva = chamadaLocal || chamadaAtual;
+
   // Filtra a chamada atual para mostrar apenas da mesma clínica
-  const chamadaAtualFiltrada = chamadaAtual && chamadaAtual.clinicaId === clinicaIdPainel ? chamadaAtual : null;
+  const chamadaAtualFiltrada = chamadaAtiva && chamadaAtiva.clinicaId === clinicaIdPainel ? chamadaAtiva : null;
 
   // Timer para a chamada
   useEffect(() => {

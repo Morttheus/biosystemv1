@@ -73,51 +73,71 @@ const ConsultorioScreen = () => {
     retorno: '',
   });
 
-  // Médico logado
-  const medicoId = usuarioLogado?.medicoId;
+  // Médico logado (suporta ambos formatos)
+  const medicoId = usuarioLogado?.medicoId || usuarioLogado?.medico_id;
 
-  // Fila do médico
+  // Helper para comparar medicoId (suporta ambos formatos)
+  const matchMedico = (a) => {
+    const atendMedicoId = a.medicoId || a.medico_id;
+    return atendMedicoId === medicoId;
+  };
+
+  // Fila do médico (suporta ambos formatos de campo)
   const filaMedico = filaAtendimento.filter(
-    a => a.medicoId === medicoId && a.status !== 'atendido'
+    a => matchMedico(a) && a.status !== 'atendido'
   );
 
   // Pacientes aguardando atendimento
   const aguardando = filaMedico.filter(a => a.status === 'aguardando');
 
-  // Pacientes atendidos no dia
-  const atendidos = filaAtendimento.filter(
-    a => a.medicoId === medicoId && a.status === 'atendido' &&
-    new Date(a.horarioFinalizacao).toDateString() === new Date().toDateString()
-  );
+  // Pacientes atendidos no dia (suporta ambos formatos)
+  const atendidos = filaAtendimento.filter(a => {
+    const horarioFinal = a.horarioFinalizacao || a.horario_finalizacao;
+    return matchMedico(a) && a.status === 'atendido' &&
+      horarioFinal && new Date(horarioFinal).toDateString() === new Date().toDateString();
+  });
 
-  // Atendimento em andamento
+  // Atendimento em andamento (status 'atendendo' no backend)
   const emAtendimento = filaAtendimento.find(
-    a => a.medicoId === medicoId && a.status === 'em_atendimento'
+    a => matchMedico(a) && a.status === 'atendendo'
   );
 
-  const handleChamarPaciente = (atendimento) => {
-    chamarPaciente(atendimento.id);
-    const paciente = pacientes.find(p => p.id === atendimento.pacienteId);
-    
-    // Registra a chamada no painel de sala de espera
-    registrarChamada(
-      atendimento.pacienteId,
-      atendimento.pacienteNome,
-      usuarioLogado.medicoId,
-      usuarioLogado.nome,
-      getClinicaIdUsuario()
-    );
-    
-    setPacienteAtual(paciente);
-    setAtendimentoAtual(atendimento);
-    setAbaAtiva('anamnese'); // Abre automaticamente a aba de anamnese
-    setMensagem({ tipo: 'sucesso', texto: `Paciente ${atendimento.pacienteNome} chamado para atendimento.` });
+  const handleChamarPaciente = async (atendimento) => {
+    // Obtém IDs corretamente (suporta ambos formatos)
+    const pacienteId = atendimento.pacienteId || atendimento.paciente_id;
+    const pacienteNome = atendimento.pacienteNome || atendimento.paciente_nome || 'Paciente';
+    const atendMedicoId = atendimento.medicoId || atendimento.medico_id;
+    const medicoNome = atendimento.medicoNome || atendimento.medico_nome || usuarioLogado?.nome;
+
+    try {
+      // Chama API para atualizar status para 'atendendo'
+      await chamarPaciente(atendimento.id, atendMedicoId || medicoId, medicoNome);
+
+      // Busca paciente pelo ID correto
+      const paciente = pacientes.find(p => p.id === pacienteId);
+
+      // Registra a chamada no painel de sala de espera
+      registrarChamada(
+        pacienteId,
+        pacienteNome,
+        medicoId,
+        usuarioLogado?.nome,
+        getClinicaIdUsuario()
+      );
+
+      setPacienteAtual(paciente);
+      setAtendimentoAtual(atendimento);
+      setAbaAtiva('anamnese'); // Abre automaticamente a aba de anamnese
+      setMensagem({ tipo: 'sucesso', texto: `Paciente ${pacienteNome} chamado para atendimento.` });
+    } catch (err) {
+      setMensagem({ tipo: 'erro', texto: err.message || 'Erro ao chamar paciente' });
+    }
   };
 
   // Chama o próximo paciente na fila
-  const handleChamarProximo = () => {
+  const handleChamarProximo = async () => {
     if (aguardando.length > 0) {
-      handleChamarPaciente(aguardando[0]);
+      await handleChamarPaciente(aguardando[0]);
     }
   };
 
@@ -271,30 +291,34 @@ const ConsultorioScreen = () => {
 
             <Card title="Fila de Espera">
               <div className="space-y-2">
-                {aguardando.map((atendimento, index) => (
-                  <div
-                    key={atendimento.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                        {index + 1}
-                      </span>
-                      <div>
-                        <p className="font-medium text-sm">{atendimento.pacienteNome}</p>
-                        <p className="text-xs text-gray-500">{atendimento.procedimentoNome}</p>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="success"
-                      onClick={() => handleChamarPaciente(atendimento)}
-                      disabled={!!emAtendimento}
+                {aguardando.map((atendimento, index) => {
+                  const pacienteNome = atendimento.pacienteNome || atendimento.paciente_nome || 'Paciente';
+                  const procedimentoNome = atendimento.procedimentoNome || atendimento.procedimento_nome || '';
+                  return (
+                    <div
+                      key={atendimento.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                     >
-                      <ChevronRight size={16} />
-                    </Button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <p className="font-medium text-sm">{pacienteNome}</p>
+                          <p className="text-xs text-gray-500">{procedimentoNome}</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="success"
+                        onClick={() => handleChamarPaciente(atendimento)}
+                        disabled={!!emAtendimento}
+                      >
+                        <ChevronRight size={16} />
+                      </Button>
+                    </div>
+                  );
+                })}
                 {aguardando.length === 0 && (
                   <p className="text-center text-gray-500 py-4 text-sm">Nenhum paciente aguardando</p>
                 )}
@@ -312,17 +336,21 @@ const ConsultorioScreen = () => {
               </button>
               {expandirAtendidos && (
                 <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
-                  {atendidos.map((atendimento) => (
-                    <div
-                      key={atendimento.id}
-                      className="p-2 bg-green-50 rounded-lg text-sm border-l-4 border-green-600"
-                    >
-                      <p className="font-medium text-green-900">{atendimento.pacienteNome}</p>
-                      <p className="text-xs text-green-700">
-                        {new Date(atendimento.horarioFinalizacao).toLocaleTimeString('pt-BR')}
-                      </p>
-                    </div>
-                  ))}
+                  {atendidos.map((atendimento) => {
+                    const pacienteNome = atendimento.pacienteNome || atendimento.paciente_nome || 'Paciente';
+                    const horarioFinal = atendimento.horarioFinalizacao || atendimento.horario_finalizacao;
+                    return (
+                      <div
+                        key={atendimento.id}
+                        className="p-2 bg-green-50 rounded-lg text-sm border-l-4 border-green-600"
+                      >
+                        <p className="font-medium text-green-900">{pacienteNome}</p>
+                        <p className="text-xs text-green-700">
+                          {horarioFinal ? new Date(horarioFinal).toLocaleTimeString('pt-BR') : '-'}
+                        </p>
+                      </div>
+                    );
+                  })}
                   {atendidos.length === 0 && (
                     <p className="text-center text-gray-500 py-4 text-sm">Nenhum paciente atendido ainda</p>
                   )}
