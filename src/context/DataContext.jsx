@@ -46,7 +46,9 @@ export const DataProvider = ({ children }) => {
   // Carregar médicos da API
   const carregarMedicos = async () => {
     try {
-      const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
+      // Master carrega todos os médicos, outros usuários só da sua clínica
+      const ehUsuarioMaster = usuarioLogado?.tipo === 'master';
+      const clinicaId = ehUsuarioMaster ? null : (usuarioLogado?.clinicaId || usuarioLogado?.clinica_id);
       const lista = await apiService.listarMedicos(clinicaId);
       setMedicos(lista);
     } catch (err) {
@@ -73,7 +75,9 @@ export const DataProvider = ({ children }) => {
   // Carregar pacientes e prontuários
   const carregarPacientes = async () => {
     try {
-      const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
+      // Master carrega todos os pacientes, outros usuários só da sua clínica
+      const ehUsuarioMaster = usuarioLogado?.tipo === 'master';
+      const clinicaId = ehUsuarioMaster ? null : (usuarioLogado?.clinicaId || usuarioLogado?.clinica_id);
       const lista = await apiService.listarPacientes(clinicaId);
       setPacientes(lista);
     } catch (err) {
@@ -84,7 +88,9 @@ export const DataProvider = ({ children }) => {
 
   const carregarProntuarios = async () => {
     try {
-      const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
+      // Master carrega todos os prontuários, outros usuários só da sua clínica
+      const ehUsuarioMaster = usuarioLogado?.tipo === 'master';
+      const clinicaId = ehUsuarioMaster ? null : (usuarioLogado?.clinicaId || usuarioLogado?.clinica_id);
       const lista = await apiService.listarProntuarios(null, clinicaId);
       setProntuarios(lista);
     } catch (err) {
@@ -111,7 +117,9 @@ export const DataProvider = ({ children }) => {
   // Carregar fila de atendimento
   const carregarFila = async () => {
     try {
-      const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
+      // Master carrega toda a fila, outros usuários só da sua clínica
+      const ehUsuarioMaster = usuarioLogado?.tipo === 'master';
+      const clinicaId = ehUsuarioMaster ? null : (usuarioLogado?.clinicaId || usuarioLogado?.clinica_id);
       const lista = await apiService.listarFila(clinicaId);
       setFilaAtendimento(lista);
     } catch (err) {
