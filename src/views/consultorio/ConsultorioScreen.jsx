@@ -75,10 +75,19 @@ const ConsultorioScreen = () => {
 
   // Médico logado (suporta ambos formatos)
   const medicoId = usuarioLogado?.medicoId || usuarioLogado?.medico_id;
+  const clinicaId = getClinicaIdUsuario();
 
   // Helper para comparar medicoId (suporta ambos formatos)
+  // Se médico não tem medicoId vinculado, mostra todos da clínica
   const matchMedico = (a) => {
     const atendMedicoId = a.medicoId || a.medico_id;
+    const atendClinicaId = a.clinicaId || a.clinica_id;
+
+    // Se não tem medicoId, mostra todos da clínica
+    if (!medicoId) {
+      return atendClinicaId === clinicaId;
+    }
+
     return atendMedicoId === medicoId;
   };
 

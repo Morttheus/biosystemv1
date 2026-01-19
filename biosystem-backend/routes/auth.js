@@ -130,6 +130,18 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Email ou senha inválidos' });
     }
 
+    // Se for médico, busca o medicoId correspondente pelo nome
+    let medicoId = null;
+    if (usuario.tipo === 'medico' && usuario.clinica_id) {
+      const medicoResult = await pool.query(
+        'SELECT id FROM medicos WHERE nome = $1 AND clinica_id = $2 AND ativo = true',
+        [usuario.nome, usuario.clinica_id]
+      );
+      if (medicoResult.rows.length > 0) {
+        medicoId = medicoResult.rows[0].id;
+      }
+    }
+
     // Gera JWT
     const token = jwt.sign(
       { id: usuario.id, email: usuario.email, tipo: usuario.tipo },
@@ -145,7 +157,8 @@ router.post('/login', async (req, res) => {
         email: usuario.email,
         tipo: usuario.tipo,
         clinicaId: usuario.clinica_id,
-        telefone: usuario.telefone
+        telefone: usuario.telefone,
+        medicoId: medicoId // Retorna medicoId se for médico
       },
       token
     });
@@ -168,6 +181,19 @@ router.get('/me', authenticate, async (req, res) => {
     }
 
     const usuario = resultado.rows[0];
+
+    // Se for médico, busca o medicoId correspondente pelo nome
+    let medicoId = null;
+    if (usuario.tipo === 'medico' && usuario.clinica_id) {
+      const medicoResult = await pool.query(
+        'SELECT id FROM medicos WHERE nome = $1 AND clinica_id = $2 AND ativo = true',
+        [usuario.nome, usuario.clinica_id]
+      );
+      if (medicoResult.rows.length > 0) {
+        medicoId = medicoResult.rows[0].id;
+      }
+    }
+
     res.json({
       usuario: {
         id: usuario.id,
@@ -175,7 +201,8 @@ router.get('/me', authenticate, async (req, res) => {
         email: usuario.email,
         tipo: usuario.tipo,
         clinicaId: usuario.clinica_id,
-        telefone: usuario.telefone
+        telefone: usuario.telefone,
+        medicoId: medicoId // Retorna medicoId se for médico
       }
     });
   } catch (erro) {
