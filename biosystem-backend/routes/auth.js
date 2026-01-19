@@ -112,10 +112,10 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
-    // Busca usuário
+    // Busca usuário (normaliza email para lowercase)
     const resultado = await pool.query(
-      'SELECT id, nome, email, senha, tipo, clinica_id, telefone, ativo FROM usuarios WHERE email = $1 AND ativo = true',
-      [email]
+      'SELECT id, nome, email, senha, tipo, clinica_id, telefone, ativo FROM usuarios WHERE LOWER(email) = LOWER($1) AND ativo = true',
+      [email.trim()]
     );
 
     if (resultado.rows.length === 0) {

@@ -6,7 +6,7 @@ const { authenticate } = require('../middleware/auth');
 const router = express.Router();
 
 // 📋 LISTAR PROCEDIMENTOS
-router.get('/', async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     
@@ -80,9 +80,14 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
-// ➕ CRIAR PROCEDIMENTO COM CLÍNICAS
+// ➕ CRIAR PROCEDIMENTO COM CLÍNICAS (somente master)
 router.post('/', authenticate, async (req, res) => {
   try {
+    // Verificar permissão - somente master pode criar procedimentos
+    if (req.usuario.tipo !== 'master') {
+      return res.status(403).json({ error: 'Apenas usuários Master podem criar procedimentos' });
+    }
+
     const { nome, valor, descricao, clinicas } = req.body;
 
     // Validações
@@ -144,9 +149,14 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
-// ✏️ ATUALIZAR PROCEDIMENTO
+// ✏️ ATUALIZAR PROCEDIMENTO (somente master)
 router.put('/:id', authenticate, async (req, res) => {
   try {
+    // Verificar permissão - somente master pode atualizar procedimentos
+    if (req.usuario.tipo !== 'master') {
+      return res.status(403).json({ error: 'Apenas usuários Master podem atualizar procedimentos' });
+    }
+
     const { id } = req.params;
     const { nome, valor, descricao, ativo, clinicas } = req.body;
 
@@ -238,9 +248,14 @@ router.put('/:id', authenticate, async (req, res) => {
   }
 });
 
-// 🗑️ DESATIVAR PROCEDIMENTO
+// 🗑️ DESATIVAR PROCEDIMENTO (somente master)
 router.delete('/:id', authenticate, async (req, res) => {
   try {
+    // Verificar permissão - somente master pode desativar procedimentos
+    if (req.usuario.tipo !== 'master') {
+      return res.status(403).json({ error: 'Apenas usuários Master podem desativar procedimentos' });
+    }
+
     const { id } = req.params;
 
     const resultado = await pool.query(

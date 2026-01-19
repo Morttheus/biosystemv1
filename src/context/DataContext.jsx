@@ -26,12 +26,9 @@ export const DataProvider = ({ children }) => {
   // Carregar clínicas da API
   const carregarClinicas = async () => {
     try {
-      console.log('🔄 [DataContext] Carregando clínicas da API...');
       const lista = await apiService.listarClinicas();
-      console.log('✅ [DataContext] Clínicas carregadas:', lista);
       setClinicas(lista);
     } catch (err) {
-      console.error('❌ [DataContext] Erro ao carregar clínicas:', err);
       toast.error('Erro ao carregar clínicas');
     }
   };
@@ -71,17 +68,12 @@ export const DataProvider = ({ children }) => {
   // Carregar procedimentos da API
   const carregarProcedimentos = async () => {
     try {
-      console.log('🔄 [DataContext] Carregando procedimentos da API...');
       const lista = await apiService.listarProcedimentos();
       if (lista && Array.isArray(lista) && lista.length > 0) {
-        console.log('✅ [DataContext] Procedimentos carregados da API:', lista.length);
         setProcedimentos(lista);
-      } else {
-        console.log('ℹ️ [DataContext] Nenhum procedimento retornado da API, mantendo padrões');
       }
-    } catch (err) {
-      console.error('⚠️  [DataContext] Erro ao carregar procedimentos da API:', err.message);
-      console.log('ℹ️ [DataContext] Mantendo procedimentos padrão do sistema');
+      // Se lista vazia, mantém procedimentos padrão do sistema
+    } catch {
       // Mantém os procedimentos padrão se a API falhar (sem mostrar toast)
     }
   };
@@ -161,23 +153,17 @@ export const DataProvider = ({ children }) => {
     try {
       // Remove ID se existir (deixar banco gerar)
       const { id, ...dadosClinica } = clinica;
-      console.log('📝 [DataContext] Enviando clínica para API:', dadosClinica);
-      
       const resultado = await apiService.criarClinica(dadosClinica);
-      console.log('📊 [DataContext] Resposta da API:', resultado);
-      
+
       if (resultado.clinica) {
-        console.log('✅ [DataContext] Clínica recebida, atualizando estado:', resultado.clinica);
         setClinicas(prev => [...prev, resultado.clinica]);
         toast.success('Clínica adicionada com sucesso!');
         return { success: true, clinica: resultado.clinica };
       }
-      
-      console.error('❌ [DataContext] Resposta sem clínica:', resultado);
+
       throw new Error(resultado.error || 'Erro ao adicionar clínica');
     } catch (err) {
       const mensagem = err.message || 'Erro ao adicionar clínica';
-      console.error('❌ [DataContext] Erro:', mensagem);
       toast.error(mensagem);
       return { success: false, error: mensagem };
     }
@@ -252,17 +238,10 @@ export const DataProvider = ({ children }) => {
       // Prepara dados para a API (precisa de pelo menos uma clínica)
       const clinicasIds = procedimento.clinicas || clinicas.map(c => c.id);
 
-      console.log('📝 [DataContext] Enviando procedimento para API:', {
-        ...dadosProcedimento,
-        clinicas: clinicasIds
-      });
-
       const resultado = await apiService.criarProcedimento({
         ...dadosProcedimento,
         clinicas: clinicasIds
       });
-
-      console.log('📊 [DataContext] Resposta da API:', resultado);
 
       if (resultado.procedimento) {
         // Adiciona duração localmente se fornecida (campo não existe no banco)
@@ -270,17 +249,14 @@ export const DataProvider = ({ children }) => {
           ...resultado.procedimento,
           duracao: duracao || 30
         };
-        console.log('✅ [DataContext] Procedimento recebido, atualizando estado:', novoProcedimento);
         setProcedimentos(prev => [...prev, novoProcedimento]);
         toast.success('Procedimento adicionado com sucesso!');
         return { success: true, procedimento: novoProcedimento };
       }
 
-      console.error('❌ [DataContext] Resposta sem procedimento:', resultado);
       throw new Error(resultado.error || 'Erro ao adicionar procedimento');
     } catch (err) {
       const mensagem = err.message || 'Erro ao adicionar procedimento';
-      console.error('❌ [DataContext] Erro:', mensagem);
       toast.error(mensagem);
       return { success: false, error: mensagem };
     }

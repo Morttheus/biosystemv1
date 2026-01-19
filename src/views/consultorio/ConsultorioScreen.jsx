@@ -170,7 +170,7 @@ const ConsultorioScreen = () => {
     setMensagem({ tipo: 'sucesso', texto: `Paciente ${pacienteNome} chamado novamente!` });
   };
 
-  const handleFinalizarAtendimento = () => {
+  const handleFinalizarAtendimento = async () => {
     if (!atendimentoAtual) return;
 
     if (!consulta.diagnostico) {
@@ -186,9 +186,10 @@ const ConsultorioScreen = () => {
       retorno: consulta.retorno,
     };
 
-    const resultado = finalizarAtendimento(atendimentoAtual.id, dadosConsulta);
+    try {
+      const resultado = await finalizarAtendimento(atendimentoAtual.id, dadosConsulta);
 
-    if (resultado) {
+      if (resultado) {
       setMensagem({ tipo: 'sucesso', texto: 'Consulta finalizada e salva no prontuário!' });
       // Limpa os formulários
       setPacienteAtual(null);
@@ -220,6 +221,9 @@ const ConsultorioScreen = () => {
         observacoes: '',
         retorno: '',
       });
+      }
+    } catch (err) {
+      setMensagem({ tipo: 'erro', texto: err.message || 'Erro ao finalizar atendimento' });
     }
   };
 

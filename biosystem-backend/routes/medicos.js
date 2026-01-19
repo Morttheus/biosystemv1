@@ -70,9 +70,14 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
-// ➕ CRIAR MÉDICO
+// ➕ CRIAR MÉDICO (master ou admin da clínica)
 router.post('/', authenticate, async (req, res) => {
   try {
+    // Verificar permissão - master ou admin podem criar médicos
+    if (req.usuario.tipo !== 'master' && req.usuario.tipo !== 'admin') {
+      return res.status(403).json({ error: 'Permissão insuficiente para criar médicos' });
+    }
+
     const { nome, crm, especialidade, clinicaId } = req.body;
 
     // Validações
@@ -139,9 +144,14 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
-// ✏️ EDITAR MÉDICO
+// ✏️ EDITAR MÉDICO (master ou admin da clínica)
 router.put('/:id', authenticate, async (req, res) => {
   try {
+    // Verificar permissão - master ou admin podem editar médicos
+    if (req.usuario.tipo !== 'master' && req.usuario.tipo !== 'admin') {
+      return res.status(403).json({ error: 'Permissão insuficiente para editar médicos' });
+    }
+
     const { id } = req.params;
     const { nome, crm, especialidade } = req.body;
 
@@ -177,9 +187,14 @@ router.put('/:id', authenticate, async (req, res) => {
   }
 });
 
-// 🗑️ DELETAR MÉDICO (Soft delete)
+// 🗑️ DELETAR MÉDICO (Soft delete - master ou admin)
 router.delete('/:id', authenticate, async (req, res) => {
   try {
+    // Verificar permissão - master ou admin podem deletar médicos
+    if (req.usuario.tipo !== 'master' && req.usuario.tipo !== 'admin') {
+      return res.status(403).json({ error: 'Permissão insuficiente para deletar médicos' });
+    }
+
     const { id } = req.params;
 
     const resultado = await pool.query(

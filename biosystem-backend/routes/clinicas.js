@@ -57,9 +57,14 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
-// ➕ CRIAR CLÍNICA
+// ➕ CRIAR CLÍNICA (somente master)
 router.post('/', authenticate, async (req, res) => {
   try {
+    // Verificar permissão - somente master pode criar clínicas
+    if (req.usuario.tipo !== 'master') {
+      return res.status(403).json({ error: 'Apenas usuários Master podem criar clínicas' });
+    }
+
     const { nome, endereco, telefone, email, cnpj } = req.body;
     console.log('📝 [POST /clinicas] Recebido:', { nome, endereco, telefone, email, cnpj });
 
@@ -126,9 +131,14 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
-// ✏️ EDITAR CLÍNICA
+// ✏️ EDITAR CLÍNICA (somente master)
 router.put('/:id', authenticate, async (req, res) => {
   try {
+    // Verificar permissão - somente master pode editar clínicas
+    if (req.usuario.tipo !== 'master') {
+      return res.status(403).json({ error: 'Apenas usuários Master podem editar clínicas' });
+    }
+
     const { id } = req.params;
     const { nome, endereco, telefone, email, cnpj } = req.body;
 
@@ -158,9 +168,14 @@ router.put('/:id', authenticate, async (req, res) => {
   }
 });
 
-// 🗑️ DELETAR CLÍNICA (Soft delete)
+// 🗑️ DELETAR CLÍNICA (Soft delete - somente master)
 router.delete('/:id', authenticate, async (req, res) => {
   try {
+    // Verificar permissão - somente master pode deletar clínicas
+    if (req.usuario.tipo !== 'master') {
+      return res.status(403).json({ error: 'Apenas usuários Master podem deletar clínicas' });
+    }
+
     const { id } = req.params;
 
     const resultado = await pool.query(

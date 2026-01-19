@@ -66,7 +66,7 @@ const AdminScreen = () => {
   ];
 
   // Handlers de Usuários
-  const handleSalvarUsuario = () => {
+  const handleSalvarUsuario = async () => {
     setErro('');
 
     if (!formUsuario.nome || !formUsuario.email) {
@@ -84,22 +84,26 @@ const AdminScreen = () => {
       clinicaId: usuarioLogado.clinicaId // Sempre vincula à clínica do admin
     };
 
-    let resultado;
-    if (itemEditando) {
-      // Não envia senha se estiver vazia (não está alterando)
-      const dadosEdicao = { ...dados };
-      if (!dadosEdicao.senha) delete dadosEdicao.senha;
-      resultado = editarUsuario(itemEditando.id, dadosEdicao);
-    } else {
-      resultado = adicionarUsuario(dados);
-    }
+    try {
+      let resultado;
+      if (itemEditando) {
+        // Não envia senha se estiver vazia (não está alterando)
+        const dadosEdicao = { ...dados };
+        if (!dadosEdicao.senha) delete dadosEdicao.senha;
+        resultado = await editarUsuario(itemEditando.id, dadosEdicao);
+      } else {
+        resultado = await adicionarUsuario(dados);
+      }
 
-    if (!resultado.success) {
-      setErro(resultado.error);
-      return;
-    }
+      if (!resultado.success) {
+        setErro(resultado.error);
+        return;
+      }
 
-    fecharModal();
+      fecharModal();
+    } catch (err) {
+      setErro(err.message || 'Erro ao salvar usuário');
+    }
   };
 
   const handleEditarUsuario = (usuario) => {
@@ -119,12 +123,16 @@ const AdminScreen = () => {
       isOpen: true,
       title: 'Confirmar Exclusão',
       message: 'Tem certeza que deseja excluir este usuário?',
-      onConfirm: () => {
-        const resultado = excluirUsuario(id);
-        if (!resultado.success) {
-          toast.error(resultado.error);
-        } else {
-          toast.success('Usuário excluído com sucesso!');
+      onConfirm: async () => {
+        try {
+          const resultado = await excluirUsuario(id);
+          if (!resultado.success) {
+            toast.error(resultado.error);
+          } else {
+            toast.success('Usuário excluído com sucesso!');
+          }
+        } catch (err) {
+          toast.error(err.message || 'Erro ao excluir usuário');
         }
         setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null });
       }
@@ -132,25 +140,37 @@ const AdminScreen = () => {
   };
 
   // Handlers de Médicos
-  const handleSalvarMedico = () => {
+  const handleSalvarMedico = async () => {
     if (!formMedico.nome || !formMedico.crm) {
       setErro('Nome e CRM são obrigatórios');
       return;
     }
 
-    if (itemEditando) {
-      editarMedico(itemEditando.id, {
-        ...formMedico,
-        clinicaId: usuarioLogado.clinicaId
-      });
-    } else {
-      adicionarMedico({
-        ...formMedico,
-        clinicaId: usuarioLogado.clinicaId
-      });
-    }
+    try {
+      if (itemEditando) {
+        const resultado = await editarMedico(itemEditando.id, {
+          ...formMedico,
+          clinicaId: usuarioLogado.clinicaId
+        });
+        if (!resultado.success) {
+          setErro(resultado.error);
+          return;
+        }
+      } else {
+        const resultado = await adicionarMedico({
+          ...formMedico,
+          clinicaId: usuarioLogado.clinicaId
+        });
+        if (!resultado.success) {
+          setErro(resultado.error);
+          return;
+        }
+      }
 
-    fecharModal();
+      fecharModal();
+    } catch (err) {
+      setErro(err.message || 'Erro ao salvar médico');
+    }
   };
 
   const handleEditarMedico = (medico) => {

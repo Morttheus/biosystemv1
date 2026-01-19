@@ -21,15 +21,17 @@ const LoginScreen = () => {
     setErro('');
     setLoading(true);
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      const resultado = await login(email, senha);
 
-    const resultado = login(email, senha);
-
-    if (!resultado.success) {
-      setErro(resultado.error);
+      if (!resultado.success) {
+        setErro(resultado.error || 'Erro ao fazer login');
+      }
+    } catch (err) {
+      setErro(err.message || 'Erro ao conectar com o servidor');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
