@@ -47,6 +47,7 @@ const MasterScreen = () => {
     adicionarProcedimento,
     editarProcedimento,
     excluirProcedimento,
+    obterProcedimentoComClinicas,
     obterTodosProntuarios,
     todosProntuarios,
     todaFilaAtendimento,
@@ -61,7 +62,7 @@ const MasterScreen = () => {
   // Estados dos formulários
   const [formClinica, setFormClinica] = useState({ nome: '', endereco: '', telefone: '' });
   const [formMedico, setFormMedico] = useState({ nome: '', crm: '', especialidade: '', clinicaId: '' });
-  const [formProcedimento, setFormProcedimento] = useState({ nome: '', valor: '', duracao: '' });
+  const [formProcedimento, setFormProcedimento] = useState({ nome: '', valor: '', duracao: '', clinicasSelecionadas: [] });
   const [formUsuario, setFormUsuario] = useState({ nome: '', email: '', senha: '', tipo: 'usuario', clinicaId: '', acessoRelatorios: false, telefone: '' });
 
   // Estados do Relatório
@@ -140,32 +141,67 @@ const MasterScreen = () => {
   };
 
   // Handlers de Procedimentos
-  const handleSalvarProcedimento = () => {
+  const handleSalvarProcedimento = async () => {
     if (!formProcedimento.nome || !formProcedimento.valor) return alert('Nome e Valor são obrigatórios');
+    if (formProcedimento.clinicasSelecionadas.length === 0) return alert('Selecione pelo menos uma clínica');
+
+    const dados = {
+      nome: formProcedimento.nome,
+      valor: parseFloat(formProcedimento.valor),
+      duracao: parseInt(formProcedimento.duracao) || 30,
+      clinicas: formProcedimento.clinicasSelecionadas.map(id => ({ id: parseInt(id) }))
+    };
+
     if (itemEditando) {
-      editarProcedimento(itemEditando.id, {
-        ...formProcedimento,
-        valor: parseFloat(formProcedimento.valor),
-        duracao: parseInt(formProcedimento.duracao)
-      });
+      const resultado = await editarProcedimento(itemEditando.id, dados);
+      if (!resultado.success) {
+        return;
+      }
     } else {
-      adicionarProcedimento({
-        ...formProcedimento,
-        valor: parseFloat(formProcedimento.valor),
-        duracao: parseInt(formProcedimento.duracao)
-      });
+      const resultado = await adicionarProcedimento(dados);
+      if (!resultado.success) {
+        return;
+      }
     }
     fecharModal();
   };
 
-  const handleEditarProcedimento = (proc) => {
+  const handleEditarProcedimento = async (proc) => {
     setItemEditando(proc);
+
+    // Busca clínicas vinculadas ao procedimento da API
+    let clinicasVinculadas = [];
+    try {
+      const procComClinicas = await obterProcedimentoComClinicas(proc.id);
+      if (procComClinicas && procComClinicas.clinicas) {
+        clinicasVinculadas = procComClinicas.clinicas.map(c => c.id?.toString());
+      }
+    } catch (err) {
+      console.error('Erro ao buscar clínicas do procedimento:', err);
+    }
+
+    // Se não encontrou clínicas vinculadas, assume todas
+    if (clinicasVinculadas.length === 0) {
+      clinicasVinculadas = clinicas.map(c => c.id.toString());
+    }
+
     setFormProcedimento({
       nome: proc.nome,
-      valor: proc.valor.toString(),
-      duracao: proc.duracao.toString()
+      valor: proc.valor?.toString() || '0',
+      duracao: proc.duracao?.toString() || '30',
+      clinicasSelecionadas: clinicasVinculadas
     });
     setModalAberto('procedimento');
+  };
+
+  const handleToggleClinicaProcedimento = (clinicaId) => {
+    setFormProcedimento(prev => {
+      const clinicaIdStr = clinicaId.toString();
+      const selecionadas = prev.clinicasSelecionadas.includes(clinicaIdStr)
+        ? prev.clinicasSelecionadas.filter(id => id !== clinicaIdStr)
+        : [...prev.clinicasSelecionadas, clinicaIdStr];
+      return { ...prev, clinicasSelecionadas: selecionadas };
+    });
   };
 
   // Handlers de Usuários
@@ -253,7 +289,7 @@ const MasterScreen = () => {
     setErro('');
     setFormClinica({ nome: '', endereco: '', telefone: '' });
     setFormMedico({ nome: '', crm: '', especialidade: '', clinicaId: '' });
-    setFormProcedimento({ nome: '', valor: '', duracao: '' });
+    setFormProcedimento({ nome: '', valor: '', duracao: '', clinicasSelecionadas: clinicas.map(c => c.id.toString()) });
     setFormUsuario({ nome: '', email: '', senha: '', tipo: 'usuario', clinicaId: '', acessoRelatorios: false, telefone: '' });
   };
 
@@ -710,7 +746,15 @@ const MasterScreen = () => {
           <Card
             title="Gerenciar Procedimentos"
             headerActions={
-              <Button icon={Plus} size="sm" onClick={() => setModalAberto('procedimento')}>
+              <Button icon={Plus} size="sm" onClick={() => {
+                setFormProcedimento({
+                  nome: '',
+                  valor: '',
+                  duracao: '',
+                  clinicasSelecionadas: clinicas.map(c => c.id.toString())
+                });
+                setModalAberto('procedimento');
+              }}>
                 Novo Procedimento
               </Button>
             }
@@ -722,6 +766,7 @@ const MasterScreen = () => {
                     <th className="text-left py-3 px-4">Nome</th>
                     <th className="text-left py-3 px-4">Valor</th>
                     <th className="text-left py-3 px-4">Duração</th>
+                    <th className="text-left py-3 px-4">Clínicas</th>
                     <th className="text-right py-3 px-4">Ações</th>
                   </tr>
                 </thead>
@@ -730,9 +775,14 @@ const MasterScreen = () => {
                     <tr key={proc.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4 font-medium">{proc.nome}</td>
                       <td className="py-3 px-4 text-green-600 font-medium">
-                        R$ {proc.valor.toFixed(2)}
+                        R$ {(proc.valor || 0).toFixed(2)}
                       </td>
-                      <td className="py-3 px-4 text-gray-600">{proc.duracao} min</td>
+                      <td className="py-3 px-4 text-gray-600">{proc.duracao || 30} min</td>
+                      <td className="py-3 px-4">
+                        <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-sm">
+                          {proc.clinicas?.length || clinicas.length} clínica(s)
+                        </span>
+                      </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex gap-2 justify-end">
                           <Button size="sm" variant="secondary" icon={Edit} onClick={() => handleEditarProcedimento(proc)}>
@@ -1403,7 +1453,7 @@ const MasterScreen = () => {
       {/* Modal de Procedimento */}
       {modalAberto === 'procedimento' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-full max-w-md p-6 m-4">
+          <div className="bg-white rounded-lg w-full max-w-md p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">
                 {itemEditando ? 'Editar Procedimento' : 'Novo Procedimento'}
@@ -1432,6 +1482,36 @@ const MasterScreen = () => {
                 value={formProcedimento.duracao}
                 onChange={(e) => setFormProcedimento({ ...formProcedimento, duracao: e.target.value })}
               />
+
+              {/* Seleção de Clínicas */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Clínicas Vinculadas *
+                </label>
+                <div className="border border-gray-300 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2">
+                  {clinicas.map(clinica => (
+                    <label
+                      key={clinica.id}
+                      className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formProcedimento.clinicasSelecionadas.includes(clinica.id.toString())}
+                        onChange={() => handleToggleClinicaProcedimento(clinica.id)}
+                        className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      />
+                      <span className="text-sm text-gray-700">{clinica.nome}</span>
+                    </label>
+                  ))}
+                </div>
+                {formProcedimento.clinicasSelecionadas.length === 0 && (
+                  <p className="text-red-500 text-xs mt-1">Selecione pelo menos uma clínica</p>
+                )}
+                <p className="text-gray-500 text-xs mt-1">
+                  {formProcedimento.clinicasSelecionadas.length} clínica(s) selecionada(s)
+                </p>
+              </div>
+
               <div className="flex gap-3 pt-4">
                 <Button variant="secondary" fullWidth onClick={fecharModal}>
                   Cancelar

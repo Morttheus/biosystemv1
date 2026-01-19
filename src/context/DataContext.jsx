@@ -244,23 +244,100 @@ export const DataProvider = ({ children }) => {
   };
 
   // ============ FUNÇÕES DE PROCEDIMENTOS ============
-  const adicionarProcedimento = (procedimento) => {
-    // Gera ID com valor seguro (não usa Date.now() que causa overflow)
-    const novoProcedimento = {
-      ...procedimento,
-      id: Math.floor(Math.random() * 1000000) + 1,
-      ativo: true,
-    };
-    setProcedimentos(prev => [...prev, novoProcedimento]);
-    return novoProcedimento;
+  const adicionarProcedimento = async (procedimento) => {
+    try {
+      // Remove ID se existir (deixar banco gerar)
+      const { id, duracao, ...dadosProcedimento } = procedimento;
+
+      // Prepara dados para a API (precisa de pelo menos uma clínica)
+      const clinicasIds = procedimento.clinicas || clinicas.map(c => c.id);
+
+      console.log('📝 [DataContext] Enviando procedimento para API:', {
+        ...dadosProcedimento,
+        clinicas: clinicasIds
+      });
+
+      const resultado = await apiService.criarProcedimento({
+        ...dadosProcedimento,
+        clinicas: clinicasIds
+      });
+
+      console.log('📊 [DataContext] Resposta da API:', resultado);
+
+      if (resultado.procedimento) {
+        // Adiciona duração localmente se fornecida (campo não existe no banco)
+        const novoProcedimento = {
+          ...resultado.procedimento,
+          duracao: duracao || 30
+        };
+        console.log('✅ [DataContext] Procedimento recebido, atualizando estado:', novoProcedimento);
+        setProcedimentos(prev => [...prev, novoProcedimento]);
+        toast.success('Procedimento adicionado com sucesso!');
+        return { success: true, procedimento: novoProcedimento };
+      }
+
+      console.error('❌ [DataContext] Resposta sem procedimento:', resultado);
+      throw new Error(resultado.error || 'Erro ao adicionar procedimento');
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao adicionar procedimento';
+      console.error('❌ [DataContext] Erro:', mensagem);
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
   };
 
-  const editarProcedimento = (id, dados) => {
-    setProcedimentos(prev => prev.map(p => p.id === id ? { ...p, ...dados } : p));
+  const editarProcedimento = async (id, dados) => {
+    try {
+      // Prepara dados para a API
+      const { duracao, ...dadosAPI } = dados;
+
+      // Se tem clínicas, envia para a API
+      if (dados.clinicas) {
+        dadosAPI.clinicas = dados.clinicas;
+      }
+
+      const resultado = await apiService.atualizarProcedimento(id, dadosAPI);
+
+      if (resultado.procedimento) {
+        // Mantém duração localmente
+        const procedimentoAtualizado = {
+          ...resultado.procedimento,
+          duracao: duracao || dados.duracao || 30
+        };
+        setProcedimentos(prev => prev.map(p => p.id === id ? procedimentoAtualizado : p));
+        toast.success('Procedimento atualizado com sucesso!');
+        return { success: true, procedimento: procedimentoAtualizado };
+      }
+
+      throw new Error(resultado.error || 'Erro ao atualizar procedimento');
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao atualizar procedimento';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
   };
 
-  const excluirProcedimento = (id) => {
-    setProcedimentos(prev => prev.map(p => p.id === id ? { ...p, ativo: false } : p));
+  const excluirProcedimento = async (id) => {
+    try {
+      await apiService.deletarProcedimento(id);
+      setProcedimentos(prev => prev.map(p => p.id === id ? { ...p, ativo: false } : p));
+      toast.success('Procedimento desativado com sucesso!');
+      return { success: true };
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao desativar procedimento';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
+  };
+
+  const obterProcedimentoComClinicas = async (id) => {
+    try {
+      const resultado = await apiService.obterProcedimento(id);
+      return resultado;
+    } catch (err) {
+      console.error('Erro ao obter procedimento:', err);
+      return null;
+    }
   };
 
   // ============ FUNÇÕES DE PACIENTES ============
@@ -735,6 +812,7 @@ export const DataProvider = ({ children }) => {
     adicionarProcedimento,
     editarProcedimento,
     excluirProcedimento,
+    obterProcedimentoComClinicas,
 
     // Funções de Pacientes
     buscarPacientePorCPF,

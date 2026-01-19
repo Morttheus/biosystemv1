@@ -236,11 +236,16 @@ class ApiService {
   }
 
   // ========== PROCEDIMENTOS ==========
-  async listarProcedimentos() {
-    return this.request('GET', '/procedimentos');
+  async listarProcedimentos(clinicaId = null) {
+    const query = clinicaId ? `?clinica_id=${clinicaId}` : '';
+    return this.request('GET', `/procedimentos${query}`);
   }
 
   async obterProcedimento(id) {
+    return this.request('GET', `/procedimentos/${id}`);
+  }
+
+  async obterProcedimentoComClinicas(id) {
     return this.request('GET', `/procedimentos/${id}`);
   }
 
