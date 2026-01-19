@@ -18,7 +18,8 @@ import {
   ChevronRight,
   ChevronDown,
   History,
-  LogOut
+  LogOut,
+  Volume2
 } from 'lucide-react';
 
 const ConsultorioScreen = () => {
@@ -148,6 +149,25 @@ const ConsultorioScreen = () => {
     if (aguardando.length > 0) {
       await handleChamarPaciente(aguardando[0]);
     }
+  };
+
+  // Chamar novamente o paciente atual (quando ele não viu a chamada)
+  const handleChamarNovamente = () => {
+    if (!pacienteAtual || !atendimentoAtual) return;
+
+    const pacienteNome = atendimentoAtual.pacienteNome || atendimentoAtual.paciente_nome || pacienteAtual.nome;
+    const pacienteId = atendimentoAtual.pacienteId || atendimentoAtual.paciente_id || pacienteAtual.id;
+
+    // Registra nova chamada no painel
+    registrarChamada(
+      pacienteId,
+      pacienteNome,
+      medicoId,
+      usuarioLogado?.nome,
+      getClinicaIdUsuario()
+    );
+
+    setMensagem({ tipo: 'sucesso', texto: `Paciente ${pacienteNome} chamado novamente!` });
   };
 
   const handleFinalizarAtendimento = () => {
@@ -406,13 +426,21 @@ const ConsultorioScreen = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end gap-2">
                       <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                         Em Atendimento
                       </span>
-                      <p className="text-sm text-gray-500 mt-2">
+                      <p className="text-sm text-gray-500">
                         {atendimentoAtual?.procedimentoNome}
                       </p>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={Volume2}
+                        onClick={handleChamarNovamente}
+                      >
+                        Chamar Novamente
+                      </Button>
                     </div>
                   </div>
                 </Card>

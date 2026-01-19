@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { Volume2, Clock, User, Stethoscope } from 'lucide-react';
+import { Volume2, Clock, User, Stethoscope, LogOut } from 'lucide-react';
 
 const SalaEsperaScreen = () => {
   const { chamadaAtual, obterChamadasDia, getClinicaIdUsuario } = useData();
-  useAuth(); // Necessário para obter clinicaId via getClinicaIdUsuario
+  const { logout } = useAuth();
   const [tempoRestante, setTempoRestante] = useState(30);
   const [exibirChamada, setExibirChamada] = useState(false);
   const [chamadaLocal, setChamadaLocal] = useState(null);
@@ -240,9 +240,18 @@ const SalaEsperaScreen = () => {
       )}
 
       {/* Footer */}
-      <div className="fixed bottom-4 right-4 text-gray-400 text-sm">
-        <p>BioSystem - Painel de Sala de Espera</p>
-        <p>{new Date().toLocaleTimeString('pt-BR')}</p>
+      <div className="fixed bottom-4 left-4 right-4 flex justify-between items-end">
+        <button
+          onClick={logout}
+          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors shadow-lg"
+        >
+          <LogOut size={20} />
+          Sair do Painel
+        </button>
+        <div className="text-gray-400 text-sm text-right">
+          <p>BioSystem - Painel de Sala de Espera</p>
+          <p>{new Date().toLocaleTimeString('pt-BR')}</p>
+        </div>
       </div>
     </div>
   );
