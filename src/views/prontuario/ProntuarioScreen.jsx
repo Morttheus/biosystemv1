@@ -63,10 +63,25 @@ const ProntuarioScreen = () => {
     });
   };
 
-  const handleBuscar = () => {
+  const handleBuscar = async () => {
     if (!cpfBusca) return;
-    const paciente = buscarPacientePorCPF(cpfBusca);
-    setPacienteSelecionado(paciente);
+    try {
+      const paciente = await buscarPacientePorCPF(cpfBusca);
+      if (paciente) {
+        setPacienteSelecionado(paciente);
+        setConsultaExpandida(null);
+      } else {
+        // Se não encontrou na API, tenta na lista local
+        const cpfLimpo = cpfBusca.replace(/\D/g, '');
+        const pacienteLocal = pacientes.find(p => p.cpf?.replace(/\D/g, '') === cpfLimpo);
+        setPacienteSelecionado(pacienteLocal || null);
+      }
+    } catch (err) {
+      // Se erro na API, tenta na lista local
+      const cpfLimpo = cpfBusca.replace(/\D/g, '');
+      const pacienteLocal = pacientes.find(p => p.cpf?.replace(/\D/g, '') === cpfLimpo);
+      setPacienteSelecionado(pacienteLocal || null);
+    }
   };
 
   const handleSelecionarPaciente = (paciente) => {

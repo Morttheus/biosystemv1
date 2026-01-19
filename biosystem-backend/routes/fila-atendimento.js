@@ -136,7 +136,11 @@ router.put('/:id', authenticate, async (req, res) => {
        SET status = COALESCE($1, status),
            medico_id = COALESCE($2, medico_id),
            medico_nome = COALESCE($3, medico_nome),
-           horario_atendimento = CASE WHEN $1 = 'atendendo' THEN NOW() ELSE horario_atendimento END
+           horario_atendimento = CASE
+             WHEN $1 = 'atendendo' THEN COALESCE(horario_atendimento, NOW())
+             WHEN $1 = 'atendido' THEN NOW()
+             ELSE horario_atendimento
+           END
        WHERE id = $4
        RETURNING id, paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada, horario_atendimento`,
       valores

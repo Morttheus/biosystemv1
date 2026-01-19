@@ -347,17 +347,27 @@ export const DataProvider = ({ children }) => {
       const atendimento = filaAtendimento.find(a => a.id === atendimentoId);
       if (!atendimento) return null;
 
+      // Obtém IDs corretamente (suporta ambos formatos)
+      const pacienteId = atendimento.pacienteId || atendimento.paciente_id;
+      const atendMedicoId = atendimento.medicoId || atendimento.medico_id;
+      const pacienteNome = atendimento.pacienteNome || atendimento.paciente_nome || '';
+      const medicoNome = atendimento.medicoNome || atendimento.medico_nome || '';
+
       // Cria registro no prontuário via API
       const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
       const resultadoProntuario = await apiService.criarProntuario({
-        pacienteId: atendimento.paciente_id,
-        medicoId: atendimento.medico_id,
+        pacienteId: pacienteId,
+        medicoId: atendMedicoId,
         clinicaId: clinicaId,
         descricao: JSON.stringify({
           diagnostico: dadosConsulta.diagnostico || '',
           prescricao: dadosConsulta.prescricao || '',
           observacoes: dadosConsulta.observacoes || '',
+          retorno: dadosConsulta.retorno || '',
           anamnese: dadosConsulta.anamnese || {},
+          pacienteNome: pacienteNome,
+          medicoNome: medicoNome,
+          procedimento: atendimento.procedimentoNome || atendimento.procedimento_nome || 'Consulta',
         }),
       });
 
@@ -365,9 +375,13 @@ export const DataProvider = ({ children }) => {
         setProntuarios(prev => [...prev, resultadoProntuario.prontuario]);
       }
 
-      // Remove da fila
-      await apiService.removerFila(atendimentoId);
-      setFilaAtendimento(prev => prev.filter(a => a.id !== atendimentoId));
+      // Atualiza status para 'atendido' ao invés de remover (para relatórios)
+      await apiService.atualizarFila(atendimentoId, { status: 'atendido' });
+      setFilaAtendimento(prev => prev.map(a =>
+        a.id === atendimentoId
+          ? { ...a, status: 'atendido', horario_finalizacao: new Date().toISOString() }
+          : a
+      ));
 
       toast.success('Atendimento finalizado!');
       return resultadoProntuario.prontuario;
@@ -389,14 +403,67 @@ export const DataProvider = ({ children }) => {
   };
 
   // ============ FUNÇÕES DE PRONTUÁRIO ============
+  // Helper para parsear e enriquecer prontuário
+  const parsearProntuario = (p) => {
+    // Obtém IDs com suporte a ambos formatos
+    const pPacienteId = p.pacienteId || p.paciente_id;
+    const pMedicoId = p.medicoId || p.medico_id;
+    const pClinicaId = p.clinicaId || p.clinica_id;
+    const pData = p.data || p.data_consulta;
+
+    // Parseia descrição JSON
+    let dadosDescricao = {};
+    if (p.descricao) {
+      try {
+        dadosDescricao = JSON.parse(p.descricao);
+      } catch (e) {
+        // Se não for JSON, mantém como string simples
+        dadosDescricao = { observacoes: p.descricao };
+      }
+    }
+
+    // Busca nomes do paciente e médico se não estiverem na descrição
+    const paciente = pacientes.find(pac => pac.id === pPacienteId);
+    const medico = medicos.find(med => med.id === pMedicoId);
+
+    return {
+      ...p,
+      id: p.id,
+      pacienteId: pPacienteId,
+      paciente_id: pPacienteId,
+      medicoId: pMedicoId,
+      medico_id: pMedicoId,
+      clinicaId: pClinicaId,
+      clinica_id: pClinicaId,
+      data: pData,
+      // Dados parseados da descrição
+      diagnostico: dadosDescricao.diagnostico || '',
+      prescricao: dadosDescricao.prescricao || '',
+      observacoes: dadosDescricao.observacoes || '',
+      retorno: dadosDescricao.retorno || '',
+      anamnese: dadosDescricao.anamnese || {},
+      procedimento: dadosDescricao.procedimento || 'Consulta',
+      // Nomes (prioriza da descrição, depois busca nas listas)
+      pacienteNome: dadosDescricao.pacienteNome || paciente?.nome || 'Paciente',
+      pacienteCPF: paciente?.cpf || '',
+      medicoNome: dadosDescricao.medicoNome || medico?.nome || 'Médico',
+    };
+  };
+
   const obterProntuarioPaciente = (pacienteId) => {
     return prontuarios
-      .filter(p => p.paciente_id === pacienteId)
-      .sort((a, b) => new Date(b.data_consulta) - new Date(a.data_consulta));
+      .filter(p => {
+        const pPacienteId = p.pacienteId || p.paciente_id;
+        return pPacienteId === pacienteId;
+      })
+      .map(parsearProntuario)
+      .sort((a, b) => new Date(b.data) - new Date(a.data));
   };
 
   const obterTodosProntuarios = () => {
-    return prontuarios.sort((a, b) => new Date(b.data_consulta) - new Date(a.data_consulta));
+    return prontuarios
+      .map(parsearProntuario)
+      .sort((a, b) => new Date(b.data) - new Date(a.data));
   };
 
   const criarProntuario = async (dados) => {

@@ -329,19 +329,27 @@ const MasterScreen = () => {
       ? { dataInicio: new Date(filtroRelatorio.dataInicio), dataFim: new Date(filtroRelatorio.dataFim + 'T23:59:59') }
       : calcularDatasRelatorio(filtroRelatorio.periodo);
 
-    // Filtra atendimentos pelo período e clínica
+    // Filtra atendimentos pelo período e clínica (suporta ambos formatos de campo)
     let atendimentosFiltrados = todaFilaAtendimento.filter(a => {
-      const dataAtendimento = new Date(a.horarioChegada);
+      // Suporta ambos formatos: horarioChegada ou horario_chegada
+      const horarioChegada = a.horarioChegada || a.horario_chegada;
+      const dataAtendimento = new Date(horarioChegada);
       const dentroDoPerido = dataAtendimento >= dataInicio && dataAtendimento <= dataFim;
-      const daClinica = !filtroRelatorio.clinicaId || a.clinicaId === parseInt(filtroRelatorio.clinicaId);
+      // Suporta ambos formatos: clinicaId ou clinica_id
+      const aClinicaId = a.clinicaId || a.clinica_id;
+      const daClinica = !filtroRelatorio.clinicaId || aClinicaId === parseInt(filtroRelatorio.clinicaId);
       return dentroDoPerido && daClinica && a.status === 'atendido';
     });
 
-    // Filtra prontuários pelo período e clínica
+    // Filtra prontuários pelo período e clínica (suporta ambos formatos de campo)
     let prontuariosFiltrados = todosProntuarios.filter(p => {
-      const dataProntuario = new Date(p.data);
+      // Suporta ambos formatos: data ou data_consulta
+      const dataPront = p.data || p.data_consulta;
+      const dataProntuario = new Date(dataPront);
       const dentroDoPerido = dataProntuario >= dataInicio && dataProntuario <= dataFim;
-      const daClinica = !filtroRelatorio.clinicaId || p.clinicaId === parseInt(filtroRelatorio.clinicaId);
+      // Suporta ambos formatos: clinicaId ou clinica_id
+      const pClinicaId = p.clinicaId || p.clinica_id;
+      const daClinica = !filtroRelatorio.clinicaId || pClinicaId === parseInt(filtroRelatorio.clinicaId);
       return dentroDoPerido && daClinica;
     });
 
@@ -350,10 +358,16 @@ const MasterScreen = () => {
     const valorTotal = atendimentosFiltrados.reduce((acc, a) => acc + (a.valor || 0), 0);
     const totalConsultas = prontuariosFiltrados.length;
 
-    // Agrupa por clínica
+    // Agrupa por clínica (suporta ambos formatos)
     const porClinica = clinicas.map(clinica => {
-      const atendClinica = atendimentosFiltrados.filter(a => a.clinicaId === clinica.id);
-      const prontClinica = prontuariosFiltrados.filter(p => p.clinicaId === clinica.id);
+      const atendClinica = atendimentosFiltrados.filter(a => {
+        const aClinicaId = a.clinicaId || a.clinica_id;
+        return aClinicaId === clinica.id;
+      });
+      const prontClinica = prontuariosFiltrados.filter(p => {
+        const pClinicaId = p.clinicaId || p.clinica_id;
+        return pClinicaId === clinica.id;
+      });
       return {
         clinica: clinica.nome,
         clinicaId: clinica.id,
@@ -363,9 +377,12 @@ const MasterScreen = () => {
       };
     }).filter(c => c.atendimentos > 0 || c.consultas > 0);
 
-    // Agrupa por procedimento
+    // Agrupa por procedimento (suporta ambos formatos)
     const porProcedimento = procedimentos.map(proc => {
-      const atendProc = atendimentosFiltrados.filter(a => a.procedimentoId === proc.id);
+      const atendProc = atendimentosFiltrados.filter(a => {
+        const aProcId = a.procedimentoId || a.procedimento_id;
+        return aProcId === proc.id;
+      });
       return {
         procedimento: proc.nome,
         quantidade: atendProc.length,
@@ -374,23 +391,31 @@ const MasterScreen = () => {
       };
     }).filter(p => p.quantidade > 0);
 
-    // Agrupa por médico
+    // Agrupa por médico (suporta ambos formatos)
     const porMedico = medicos.map(med => {
-      const atendMed = atendimentosFiltrados.filter(a => a.medicoId === med.id);
-      const prontMed = prontuariosFiltrados.filter(p => p.medicoId === med.id);
+      const atendMed = atendimentosFiltrados.filter(a => {
+        const aMedicoId = a.medicoId || a.medico_id;
+        return aMedicoId === med.id;
+      });
+      const prontMed = prontuariosFiltrados.filter(p => {
+        const pMedicoId = p.medicoId || p.medico_id;
+        return pMedicoId === med.id;
+      });
+      const medClinicaId = med.clinicaId || med.clinica_id;
       return {
         medico: med.nome,
-        clinica: clinicas.find(c => c.id === med.clinicaId)?.nome || '-',
+        clinica: clinicas.find(c => c.id === medClinicaId)?.nome || '-',
         atendimentos: atendMed.length,
         consultas: prontMed.length,
         valor: atendMed.reduce((acc, a) => acc + (a.valor || 0), 0),
       };
     }).filter(m => m.atendimentos > 0 || m.consultas > 0);
 
-    // Agrupa por dia (para gráfico)
+    // Agrupa por dia (para gráfico) - suporta ambos formatos
     const porDia = {};
     atendimentosFiltrados.forEach(a => {
-      const dia = new Date(a.horarioChegada).toLocaleDateString('pt-BR');
+      const horarioChegada = a.horarioChegada || a.horario_chegada;
+      const dia = new Date(horarioChegada).toLocaleDateString('pt-BR');
       if (!porDia[dia]) {
         porDia[dia] = { atendimentos: 0, valor: 0 };
       }
@@ -744,22 +769,27 @@ const MasterScreen = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {pacientes.map(paciente => (
-                    <tr key={paciente.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium">{paciente.nome}</td>
-                      <td className="py-3 px-4 text-gray-600">{formatarCPF(paciente.cpf)}</td>
-                      <td className="py-3 px-4 text-gray-600">{paciente.telefone || '-'}</td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {clinicas.find(c => c.id === paciente.clinicaId)?.nome || '-'}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600">{formatarData(paciente.dataCadastro)}</td>
-                      <td className="py-3 px-4">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
-                          {paciente.prontuarioId}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {pacientes.map(paciente => {
+                    const pacClinicaId = paciente.clinicaId || paciente.clinica_id;
+                    const dataCadastro = paciente.dataCadastro || paciente.data_cadastro;
+                    const prontuarioId = paciente.prontuarioId || paciente.prontuario_id || '-';
+                    return (
+                      <tr key={paciente.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4 font-medium">{paciente.nome}</td>
+                        <td className="py-3 px-4 text-gray-600">{formatarCPF(paciente.cpf)}</td>
+                        <td className="py-3 px-4 text-gray-600">{paciente.telefone || '-'}</td>
+                        <td className="py-3 px-4 text-gray-600">
+                          {clinicas.find(c => c.id === pacClinicaId)?.nome || '-'}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600">{formatarData(dataCadastro)}</td>
+                        <td className="py-3 px-4">
+                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                            {prontuarioId}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               {pacientes.length === 0 && (
@@ -795,7 +825,7 @@ const MasterScreen = () => {
                     <div>
                       <span className="text-gray-500">Clínica:</span>
                       <span className="ml-2 font-medium">
-                        {clinicas.find(c => c.id === pront.clinicaId)?.nome || '-'}
+                        {clinicas.find(c => c.id === (pront.clinicaId || pront.clinica_id))?.nome || '-'}
                       </span>
                     </div>
                     {pront.diagnostico && (
