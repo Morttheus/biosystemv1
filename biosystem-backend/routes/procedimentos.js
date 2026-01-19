@@ -6,31 +6,42 @@ const { authenticate } = require('../middleware/auth');
 const router = express.Router();
 
 // 📋 LISTAR PROCEDIMENTOS
-router.get('/', authenticate, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     
     const { clinica_id } = req.query;
 
-    let query = `
-      SELECT DISTINCT p.id, p.nome, p.valor, p.descricao, p.ativo, p.data_cadastro
-      FROM procedimentos p
-    `;
-
     if (clinica_id) {
-      query += `
-        INNER JOIN procedimentos_clinica pc ON p.id = pc.procedimento_id
-        WHERE pc.clinica_id = $1 AND p.ativo = true
-      `;
-      const resultado = await pool.query(query, [clinica_id]);
-      return res.json(resultado.rows);
+      // Tentar primeiro com a tabela procedimentos_clinica
+      try {
+        const query = `
+          SELECT DISTINCT p.id, p.nome, p.valor, p.descricao, p.ativo, p.data_cadastro
+          FROM procedimentos p
+          INNER JOIN procedimentos_clinica pc ON p.id = pc.procedimento_id
+          WHERE pc.clinica_id = $1 AND p.ativo = true
+          ORDER BY p.nome ASC
+        `;
+        const resultado = await pool.query(query, [clinica_id]);
+        return res.json(resultado.rows);
+      } catch (erro) {
+        // Se a tabela não existir, usar fallback
+        if (erro.code === '42P01') {
+          console.warn('⚠️  Tabela procedimentos_clinica não existe, usando fallback');
+          const fallbackQuery = 'SELECT id, nome, valor, descricao, ativo, data_cadastro FROM procedimentos WHERE ativo = true ORDER BY nome ASC';
+          const resultado = await pool.query(fallbackQuery);
+          return res.json(resultado.rows);
+        }
+        throw erro;
+      }
     }
 
-    query += ` WHERE p.ativo = true ORDER BY p.nome ASC`;
+    // Sem filtro de clínica: retornar todos os procedimentos ativos
+    const query = 'SELECT id, nome, valor, descricao, ativo, data_cadastro FROM procedimentos WHERE ativo = true ORDER BY nome ASC';
     const resultado = await pool.query(query);
     res.json(resultado.rows);
   } catch (erro) {
-    console.error('Erro ao listar procedimentos:', erro);
+    console.error('❌ Erro ao listar procedimentos:', erro);
     res.status(500).json({ error: erro.message });
   }
 });

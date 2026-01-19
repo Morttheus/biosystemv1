@@ -73,14 +73,16 @@ export const DataProvider = ({ children }) => {
     try {
       console.log('🔄 [DataContext] Carregando procedimentos da API...');
       const lista = await apiService.listarProcedimentos();
-      console.log('✅ [DataContext] Procedimentos carregados:', lista);
-      if (lista && lista.length > 0) {
+      if (lista && Array.isArray(lista) && lista.length > 0) {
+        console.log('✅ [DataContext] Procedimentos carregados da API:', lista.length);
         setProcedimentos(lista);
+      } else {
+        console.log('ℹ️ [DataContext] Nenhum procedimento retornado da API, mantendo padrões');
       }
     } catch (err) {
-      console.error('❌ [DataContext] Erro ao carregar procedimentos:', err);
-      // Mantém os procedimentos padrão se a API falhar
-      toast.warn('Usando procedimentos padrão');
+      console.error('⚠️  [DataContext] Erro ao carregar procedimentos da API:', err.message);
+      console.log('ℹ️ [DataContext] Mantendo procedimentos padrão do sistema');
+      // Mantém os procedimentos padrão se a API falhar (sem mostrar toast)
     }
   };
 
