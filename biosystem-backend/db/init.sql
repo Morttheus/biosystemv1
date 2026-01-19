@@ -63,6 +63,17 @@ CREATE TABLE IF NOT EXISTS procedimentos (
   data_cadastro TIMESTAMP DEFAULT NOW()
 );
 
+-- Tabela de Vínculo Procedimentos-Clínicas (Many-to-Many)
+CREATE TABLE IF NOT EXISTS procedimentos_clinica (
+  procedimento_id INTEGER NOT NULL,
+  clinica_id INTEGER NOT NULL,
+  valor_clinica DECIMAL(10, 2),
+  data_vinculo TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (procedimento_id, clinica_id),
+  FOREIGN KEY (procedimento_id) REFERENCES procedimentos(id) ON DELETE CASCADE,
+  FOREIGN KEY (clinica_id) REFERENCES clinicas(id) ON DELETE CASCADE
+);
+
 -- Tabela de Prontuários
 CREATE TABLE IF NOT EXISTS prontuarios (
   id SERIAL PRIMARY KEY,

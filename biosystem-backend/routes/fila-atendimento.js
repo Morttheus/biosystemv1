@@ -74,19 +74,23 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Clínica não encontrada ou inativa' });
     }
 
-    // Verifica se procedimento existe (se for fornecido)
+    // Verifica se procedimento existe (se for fornecido) e está vinculado à clínica
+    let valorFinal = valor || 0;
     if (procedimentoId) {
-      const procedimentoExiste = await pool.query(
-        'SELECT id, valor FROM procedimentos WHERE id = $1 AND ativo = true',
-        [procedimentoId]
+      const procedimentoVinculado = await pool.query(
+        `SELECT p.id, COALESCE(pc.valor_clinica, p.valor) as valor_procedimento
+         FROM procedimentos p
+         LEFT JOIN procedimentos_clinica pc ON p.id = pc.procedimento_id AND pc.clinica_id = $2
+         WHERE p.id = $1 AND p.ativo = true AND pc.procedimento_id IS NOT NULL`,
+        [procedimentoId, clinicaId]
       );
-      if (procedimentoExiste.rows.length === 0) {
-        return res.status(400).json({ error: 'Procedimento não encontrado ou inativo' });
+      
+      if (procedimentoVinculado.rows.length === 0) {
+        return res.status(400).json({ error: 'Procedimento não encontrado, inativo ou não está vinculado a esta clínica' });
       }
-      // Se procedimento existe e nenhum valor foi fornecido, usa o valor do procedimento
-      if (!valor && procedimentoExiste.rows[0].valor) {
-        const novoValor = procedimentoExiste.rows[0].valor;
-      }
+      
+      // Usar o valor da clínica se vinculado, senão o valor padrão do procedimento
+      valorFinal = procedimentoVinculado.rows[0].valor_procedimento || valorFinal;
     }
 
     // Verifica se paciente já está na fila (aguardando ou atendendo)
@@ -103,7 +107,7 @@ router.post('/', authenticate, async (req, res) => {
       `INSERT INTO fila_atendimento (paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada, valor, procedimento_id)
        VALUES ($1, $2, $3, $4, $5, 'aguardando', NOW(), $6, $7)
        RETURNING id, paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada, valor, procedimento_id`,
-      [pacienteId, pacienteNome.trim(), medicoId || null, medicoNome || null, clinicaId, valor || 0, procedimentoId || null]
+      [pacienteId, pacienteNome.trim(), medicoId || null, medicoNome || null, clinicaId, valorFinal, procedimentoId || null]
     );
 
     res.status(201).json({
