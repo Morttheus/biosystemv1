@@ -68,6 +68,22 @@ export const DataProvider = ({ children }) => {
     { id: 7, nome: 'OCT - Tomografia de Coerência Óptica', valor: 350.00, duracao: 20, ativo: true },
   ]);
 
+  // Carregar procedimentos da API
+  const carregarProcedimentos = async () => {
+    try {
+      console.log('🔄 [DataContext] Carregando procedimentos da API...');
+      const lista = await apiService.listarProcedimentos();
+      console.log('✅ [DataContext] Procedimentos carregados:', lista);
+      if (lista && lista.length > 0) {
+        setProcedimentos(lista);
+      }
+    } catch (err) {
+      console.error('❌ [DataContext] Erro ao carregar procedimentos:', err);
+      // Mantém os procedimentos padrão se a API falhar
+      toast.warn('Usando procedimentos padrão');
+    }
+  };
+
   // Pacientes (agora vêm da API)
   const [pacientes, setPacientes] = useState([]);
   const [prontuarios, setProntuarios] = useState([]);
@@ -105,6 +121,7 @@ export const DataProvider = ({ children }) => {
       carregarClinicas();
       carregarPacientes();
       carregarProntuarios();
+      carregarProcedimentos();
       carregarFila();
       carregarMedicos();
     }

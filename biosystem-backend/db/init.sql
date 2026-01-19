@@ -53,6 +53,16 @@ CREATE TABLE IF NOT EXISTS medicos (
   FOREIGN KEY (clinica_id) REFERENCES clinicas(id)
 );
 
+-- Tabela de Procedimentos
+CREATE TABLE IF NOT EXISTS procedimentos (
+  id SERIAL PRIMARY KEY,
+  nome VARCHAR(255) NOT NULL,
+  valor DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  descricao TEXT,
+  ativo BOOLEAN DEFAULT true,
+  data_cadastro TIMESTAMP DEFAULT NOW()
+);
+
 -- Tabela de Prontuários
 CREATE TABLE IF NOT EXISTS prontuarios (
   id SERIAL PRIMARY KEY,
@@ -83,7 +93,8 @@ CREATE TABLE IF NOT EXISTS fila_atendimento (
   procedimento_id INTEGER,
   FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
   FOREIGN KEY (medico_id) REFERENCES medicos(id),
-  FOREIGN KEY (clinica_id) REFERENCES clinicas(id)
+  FOREIGN KEY (clinica_id) REFERENCES clinicas(id),
+  FOREIGN KEY (procedimento_id) REFERENCES procedimentos(id)
 );
 
 -- ============================================

@@ -74,6 +74,21 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Clínica não encontrada ou inativa' });
     }
 
+    // Verifica se procedimento existe (se for fornecido)
+    if (procedimentoId) {
+      const procedimentoExiste = await pool.query(
+        'SELECT id, valor FROM procedimentos WHERE id = $1 AND ativo = true',
+        [procedimentoId]
+      );
+      if (procedimentoExiste.rows.length === 0) {
+        return res.status(400).json({ error: 'Procedimento não encontrado ou inativo' });
+      }
+      // Se procedimento existe e nenhum valor foi fornecido, usa o valor do procedimento
+      if (!valor && procedimentoExiste.rows[0].valor) {
+        const novoValor = procedimentoExiste.rows[0].valor;
+      }
+    }
+
     // Verifica se paciente já está na fila (aguardando ou atendendo)
     const jaEmFila = await pool.query(
       `SELECT id FROM fila_atendimento
@@ -97,12 +112,29 @@ router.post('/', authenticate, async (req, res) => {
     });
   } catch (erro) {
     console.error('Erro ao adicionar à fila:', erro);
+    console.error('Stack trace:', erro.stack);
+    console.error('Erro detalhado:', {
+      code: erro.code,
+      detail: erro.detail,
+      hint: erro.hint,
+      message: erro.message,
+      constraintName: erro.constraint
+    });
 
     if (erro.code === '23503') {
       return res.status(400).json({ error: 'Paciente ou clínica não existe' });
     }
 
-    res.status(500).json({ error: 'Erro interno ao adicionar à fila' });
+    if (erro.code === '23505') {
+      return res.status(400).json({ error: 'Registro duplicado na fila' });
+    }
+
+    // Retorna erro mais específico em desenvolvimento
+    const mensagemErro = process.env.NODE_ENV === 'production' 
+      ? 'Erro interno ao adicionar à fila' 
+      : erro.detail || erro.message || 'Erro interno ao adicionar à fila';
+
+    res.status(500).json({ error: mensagemErro });
   }
 });
 

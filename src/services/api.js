@@ -234,6 +234,27 @@ class ApiService {
   async deletarMedico(id) {
     return this.request('DELETE', `/medicos/${id}`);
   }
+
+  // ========== PROCEDIMENTOS ==========
+  async listarProcedimentos() {
+    return this.request('GET', '/procedimentos');
+  }
+
+  async obterProcedimento(id) {
+    return this.request('GET', `/procedimentos/${id}`);
+  }
+
+  async criarProcedimento(dados) {
+    return this.request('POST', '/procedimentos', dados);
+  }
+
+  async atualizarProcedimento(id, dados) {
+    return this.request('PUT', `/procedimentos/${id}`, dados);
+  }
+
+  async deletarProcedimento(id) {
+    return this.request('DELETE', `/procedimentos/${id}`);
+  }
 }
 
 const apiService = new ApiService();
