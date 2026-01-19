@@ -18,7 +18,7 @@ router.get('/', authenticate, async (req, res) => {
 // ➕ ADICIONAR À FILA
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { pacienteId, pacienteNome, clinicaId } = req.body;
+    const { pacienteId, pacienteNome, clinicaId, valor, procedimentoId } = req.body;
 
     if (!pacienteId || !pacienteNome || !clinicaId) {
       return res.status(400).json({ error: 'Paciente, nome e clínica são obrigatórios' });
@@ -32,7 +32,9 @@ router.post('/', authenticate, async (req, res) => {
       medicoNome: null,
       clinicaId,
       status: 'aguardando',
-      horarioChegada: new Date()
+      horarioChegada: new Date(),
+      valor: valor || 0,
+      procedimentoId: procedimentoId || null
     };
 
     fila.push(item);
@@ -50,7 +52,7 @@ router.post('/', authenticate, async (req, res) => {
 router.put('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, medicoId, medicoNome } = req.body;
+    const { status, medicoId, medicoNome, valor, procedimentoId } = req.body;
 
     const item = fila.find(f => f.id === parseInt(id));
 
@@ -61,7 +63,10 @@ router.put('/:id', authenticate, async (req, res) => {
     if (status) item.status = status;
     if (medicoId) item.medicoId = medicoId;
     if (medicoNome) item.medicoNome = medicoNome;
+    if (valor !== undefined) item.valor = valor;
+    if (procedimentoId !== undefined) item.procedimentoId = procedimentoId;
     if (status === 'atendendo') item.horarioAtendimento = new Date();
+    if (status === 'atendido') item.horarioAtendimento = new Date();
 
     res.json({
       message: 'Fila atualizada com sucesso',

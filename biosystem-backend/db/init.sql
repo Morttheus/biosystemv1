@@ -79,6 +79,8 @@ CREATE TABLE IF NOT EXISTS fila_atendimento (
   status VARCHAR(50) DEFAULT 'aguardando' CHECK (status IN ('aguardando', 'atendendo', 'atendido', 'cancelado')),
   horario_chegada TIMESTAMP DEFAULT NOW(),
   horario_atendimento TIMESTAMP,
+  valor DECIMAL(10, 2) DEFAULT 0.00,
+  procedimento_id INTEGER,
   FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
   FOREIGN KEY (medico_id) REFERENCES medicos(id),
   FOREIGN KEY (clinica_id) REFERENCES clinicas(id)

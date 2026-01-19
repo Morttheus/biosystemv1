@@ -14,7 +14,7 @@ router.get('/', authenticate, async (req, res) => {
     res.set('Expires', '0');
     
     const { clinica_id, status } = req.query;
-    let query = 'SELECT id, paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada, horario_atendimento FROM fila_atendimento WHERE 1=1';
+    let query = 'SELECT id, paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada, horario_atendimento, valor, procedimento_id FROM fila_atendimento WHERE 1=1';
     const params = [];
     let paramIndex = 1;
 
@@ -43,7 +43,7 @@ router.get('/', authenticate, async (req, res) => {
 // ➕ ADICIONAR À FILA
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { pacienteId, pacienteNome, clinicaId, medicoId, medicoNome } = req.body;
+    const { pacienteId, pacienteNome, clinicaId, medicoId, medicoNome, valor, procedimentoId } = req.body;
 
     // Validações
     if (!pacienteId) {
@@ -85,10 +85,10 @@ router.post('/', authenticate, async (req, res) => {
     }
 
     const resultado = await pool.query(
-      `INSERT INTO fila_atendimento (paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada)
-       VALUES ($1, $2, $3, $4, $5, 'aguardando', NOW())
-       RETURNING id, paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada`,
-      [pacienteId, pacienteNome.trim(), medicoId || null, medicoNome || null, clinicaId]
+      `INSERT INTO fila_atendimento (paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada, valor, procedimento_id)
+       VALUES ($1, $2, $3, $4, $5, 'aguardando', NOW(), $6, $7)
+       RETURNING id, paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada, valor, procedimento_id`,
+      [pacienteId, pacienteNome.trim(), medicoId || null, medicoNome || null, clinicaId, valor || 0, procedimentoId || null]
     );
 
     res.status(201).json({
@@ -110,7 +110,7 @@ router.post('/', authenticate, async (req, res) => {
 router.put('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, medicoId, medicoNome } = req.body;
+    const { status, medicoId, medicoNome, valor, procedimentoId } = req.body;
 
     // Validação de status
     const statusValidos = ['aguardando', 'atendendo', 'atendido', 'cancelado'];
@@ -129,20 +129,22 @@ router.put('/:id', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'Registro de fila não encontrado' });
     }
 
-    const valores = [status || null, medicoId || null, medicoNome || null, id];
+    const valores = [status || null, medicoId || null, medicoNome || null, valor !== undefined ? valor : null, procedimentoId || null, id];
 
     const resultado = await pool.query(
       `UPDATE fila_atendimento
        SET status = COALESCE($1, status),
            medico_id = COALESCE($2, medico_id),
            medico_nome = COALESCE($3, medico_nome),
+           valor = COALESCE($4, valor),
+           procedimento_id = COALESCE($5, procedimento_id),
            horario_atendimento = CASE
              WHEN $1 = 'atendendo' THEN COALESCE(horario_atendimento, NOW())
              WHEN $1 = 'atendido' THEN NOW()
              ELSE horario_atendimento
            END
-       WHERE id = $4
-       RETURNING id, paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada, horario_atendimento`,
+       WHERE id = $6
+       RETURNING id, paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, status, horario_chegada, horario_atendimento, valor, procedimento_id`,
       valores
     );
 

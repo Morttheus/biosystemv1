@@ -302,7 +302,11 @@ export const DataProvider = ({ children }) => {
     try {
       const paciente = pacientes.find(p => p.id === pacienteId);
       const medico = medicos.find(m => m.id === medicoId);
+      const procedimento = procedimentos.find(p => p.id === procedimentoId);
       const clinicaId = clinicaIdParam || usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
+
+      // Obtém o valor do procedimento
+      const valor = procedimento?.valor || 0;
 
       const resultado = await apiService.adicionarFila({
         pacienteId,
@@ -310,6 +314,8 @@ export const DataProvider = ({ children }) => {
         medicoId: medicoId || null,
         medicoNome: medico?.nome || null,
         clinicaId,
+        procedimentoId: procedimentoId || null,
+        valor: valor,
       });
 
       if (resultado.filaAtendimento) {
@@ -360,6 +366,8 @@ export const DataProvider = ({ children }) => {
       const atendMedicoId = atendimento.medicoId || atendimento.medico_id;
       const pacienteNome = atendimento.pacienteNome || atendimento.paciente_nome || '';
       const medicoNome = atendimento.medicoNome || atendimento.medico_nome || '';
+      const procedimentoId = atendimento.procedimentoId || atendimento.procedimento_id;
+      const valor = atendimento.valor || dadosConsulta?.valor || 0;
 
       // Cria registro no prontuário via API
       const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
@@ -376,6 +384,7 @@ export const DataProvider = ({ children }) => {
           pacienteNome: pacienteNome,
           medicoNome: medicoNome,
           procedimento: atendimento.procedimentoNome || atendimento.procedimento_nome || 'Consulta',
+          valor: valor,
         }),
       });
 
@@ -384,10 +393,15 @@ export const DataProvider = ({ children }) => {
       }
 
       // Atualiza status para 'atendido' ao invés de remover (para relatórios)
-      await apiService.atualizarFila(atendimentoId, { status: 'atendido' });
+      // Inclui o valor na atualização para ter certeza de que será salvo
+      await apiService.atualizarFila(atendimentoId, { 
+        status: 'atendido',
+        valor: valor,
+        procedimentoId: procedimentoId
+      });
       setFilaAtendimento(prev => prev.map(a =>
         a.id === atendimentoId
-          ? { ...a, status: 'atendido', horario_finalizacao: new Date().toISOString() }
+          ? { ...a, status: 'atendido', horario_finalizacao: new Date().toISOString(), valor: valor }
           : a
       ));
 
