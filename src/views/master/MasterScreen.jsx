@@ -412,8 +412,12 @@ const MasterScreen = () => {
 
     // Calcula métricas
     const totalAtendimentos = atendimentosFiltrados.length;
-    const valorTotal = atendimentosFiltrados.reduce((acc, a) => acc + (parseFloat(a.valor) || 0), 0);
     const totalConsultas = prontuariosFiltrados.length;
+    // Valor total: soma valores dos atendimentos E dos prontuários (evita duplicação pegando o maior)
+    const valorAtendimentos = atendimentosFiltrados.reduce((acc, a) => acc + (parseFloat(a.valor) || 0), 0);
+    const valorProntuarios = prontuariosFiltrados.reduce((acc, p) => acc + (parseFloat(p.valor) || 0), 0);
+    // Usa prontuários se não houver valor nos atendimentos (histórico)
+    const valorTotal = valorAtendimentos > 0 ? valorAtendimentos : valorProntuarios;
 
     // Agrupa por clínica (suporta ambos formatos)
     const porClinica = clinicas.map(clinica => {
@@ -425,12 +429,14 @@ const MasterScreen = () => {
         const pClinicaId = p.clinicaId || p.clinica_id;
         return pClinicaId === clinica.id;
       });
+      const valorAtend = atendClinica.reduce((acc, a) => acc + (parseFloat(a.valor) || 0), 0);
+      const valorPront = prontClinica.reduce((acc, p) => acc + (parseFloat(p.valor) || 0), 0);
       return {
         clinica: clinica.nome,
         clinicaId: clinica.id,
         atendimentos: atendClinica.length,
         consultas: prontClinica.length,
-        valor: atendClinica.reduce((acc, a) => acc + (parseFloat(a.valor) || 0), 0),
+        valor: valorAtend > 0 ? valorAtend : valorPront,
       };
     }).filter(c => c.atendimentos > 0 || c.consultas > 0);
 
@@ -459,25 +465,41 @@ const MasterScreen = () => {
         return pMedicoId === med.id;
       });
       const medClinicaId = med.clinicaId || med.clinica_id;
+      const valorAtend = atendMed.reduce((acc, a) => acc + (parseFloat(a.valor) || 0), 0);
+      const valorPront = prontMed.reduce((acc, p) => acc + (parseFloat(p.valor) || 0), 0);
       return {
         medico: med.nome,
         clinica: clinicas.find(c => c.id === medClinicaId)?.nome || '-',
         atendimentos: atendMed.length,
         consultas: prontMed.length,
-        valor: atendMed.reduce((acc, a) => acc + (parseFloat(a.valor) || 0), 0),
+        valor: valorAtend > 0 ? valorAtend : valorPront,
       };
     }).filter(m => m.atendimentos > 0 || m.consultas > 0);
 
-    // Agrupa por dia (para gráfico) - suporta ambos formatos
+    // Agrupa por dia (para gráfico) - usa atendimentos ou prontuários
     const porDia = {};
+    // Primeiro, agrupa atendimentos
     atendimentosFiltrados.forEach(a => {
       const horarioChegada = a.horarioChegada || a.horario_chegada;
       const dia = new Date(horarioChegada).toLocaleDateString('pt-BR');
       if (!porDia[dia]) {
-        porDia[dia] = { atendimentos: 0, valor: 0 };
+        porDia[dia] = { atendimentos: 0, consultas: 0, valor: 0 };
       }
       porDia[dia].atendimentos++;
       porDia[dia].valor += parseFloat(a.valor) || 0;
+    });
+    // Depois, agrupa prontuários (adiciona consultas e valor se não veio de atendimentos)
+    prontuariosFiltrados.forEach(p => {
+      const dataPront = p.data || p.data_consulta;
+      const dia = new Date(dataPront).toLocaleDateString('pt-BR');
+      if (!porDia[dia]) {
+        porDia[dia] = { atendimentos: 0, consultas: 0, valor: 0 };
+      }
+      porDia[dia].consultas++;
+      // Adiciona valor do prontuário se não havia valor de atendimentos nesse dia
+      if (porDia[dia].valor === 0) {
+        porDia[dia].valor += parseFloat(p.valor) || 0;
+      }
     });
 
     const relatorio = {
@@ -491,7 +513,10 @@ const MasterScreen = () => {
         totalAtendimentos,
         valorTotal,
         totalConsultas,
-        ticketMedio: totalAtendimentos > 0 ? valorTotal / totalAtendimentos : 0,
+        // Ticket médio: usa atendimentos se houver, senão usa consultas
+        ticketMedio: totalAtendimentos > 0
+          ? valorTotal / totalAtendimentos
+          : (totalConsultas > 0 ? valorTotal / totalConsultas : 0),
       },
       porClinica,
       porProcedimento,

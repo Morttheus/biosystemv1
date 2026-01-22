@@ -537,6 +537,7 @@ export const DataProvider = ({ children }) => {
       retorno: dadosDescricao.retorno || '',
       anamnese: dadosDescricao.anamnese || {},
       procedimento: dadosDescricao.procedimento || 'Consulta',
+      valor: parseFloat(dadosDescricao.valor) || 0,
       // Nomes (prioriza da descrição, depois busca nas listas)
       pacienteNome: dadosDescricao.pacienteNome || paciente?.nome || 'Paciente',
       pacienteCPF: paciente?.cpf || '',
