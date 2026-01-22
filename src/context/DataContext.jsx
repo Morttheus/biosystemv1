@@ -439,7 +439,7 @@ export const DataProvider = ({ children }) => {
       const pacienteNome = atendimento.pacienteNome || atendimento.paciente_nome || '';
       const medicoNome = atendimento.medicoNome || atendimento.medico_nome || '';
       const procedimentoId = atendimento.procedimentoId || atendimento.procedimento_id;
-      const valor = atendimento.valor || dadosConsulta?.valor || 0;
+      const valor = parseFloat(atendimento.valor) || parseFloat(dadosConsulta?.valor) || 0;
 
       // Cria registro no prontuário via API
       const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;

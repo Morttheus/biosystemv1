@@ -399,7 +399,7 @@ const RecepcaoScreen = () => {
                   onChange={(e) => setForm({ ...form, procedimentoId: e.target.value })}
                   options={procedimentos.map(p => ({
                     value: p.id.toString(),
-                    label: `${p.nome} - R$ ${p.valor.toFixed(2)}`
+                    label: `${p.nome} - R$ ${parseFloat(p.valor || 0).toFixed(2)}`
                   }))}
                   required
                 />

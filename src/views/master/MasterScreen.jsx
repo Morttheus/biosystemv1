@@ -24,7 +24,6 @@ import {
   Shield,
   BarChart3,
   Printer,
-  Eye,
   Download,
   TrendingUp,
   DollarSign,
@@ -73,8 +72,6 @@ const MasterScreen = () => {
     dataFim: new Date().toISOString().split('T')[0],
   });
   const [relatorioGerado, setRelatorioGerado] = useState(null);
-  // eslint-disable-next-line no-unused-vars
-  const [mostrarRelatorio, setMostrarRelatorio] = useState(false);
 
   // Obtém todos os usuários
   const todosUsuarios = obterTodosUsuarios();
@@ -415,7 +412,7 @@ const MasterScreen = () => {
 
     // Calcula métricas
     const totalAtendimentos = atendimentosFiltrados.length;
-    const valorTotal = atendimentosFiltrados.reduce((acc, a) => acc + (a.valor || 0), 0);
+    const valorTotal = atendimentosFiltrados.reduce((acc, a) => acc + (parseFloat(a.valor) || 0), 0);
     const totalConsultas = prontuariosFiltrados.length;
 
     // Agrupa por clínica (suporta ambos formatos)
@@ -433,7 +430,7 @@ const MasterScreen = () => {
         clinicaId: clinica.id,
         atendimentos: atendClinica.length,
         consultas: prontClinica.length,
-        valor: atendClinica.reduce((acc, a) => acc + (a.valor || 0), 0),
+        valor: atendClinica.reduce((acc, a) => acc + (parseFloat(a.valor) || 0), 0),
       };
     }).filter(c => c.atendimentos > 0 || c.consultas > 0);
 
@@ -446,8 +443,8 @@ const MasterScreen = () => {
       return {
         procedimento: proc.nome,
         quantidade: atendProc.length,
-        valorUnitario: proc.valor,
-        valorTotal: atendProc.length * proc.valor,
+        valorUnitario: parseFloat(proc.valor) || 0,
+        valorTotal: atendProc.length * (parseFloat(proc.valor) || 0),
       };
     }).filter(p => p.quantidade > 0);
 
@@ -467,7 +464,7 @@ const MasterScreen = () => {
         clinica: clinicas.find(c => c.id === medClinicaId)?.nome || '-',
         atendimentos: atendMed.length,
         consultas: prontMed.length,
-        valor: atendMed.reduce((acc, a) => acc + (a.valor || 0), 0),
+        valor: atendMed.reduce((acc, a) => acc + (parseFloat(a.valor) || 0), 0),
       };
     }).filter(m => m.atendimentos > 0 || m.consultas > 0);
 
@@ -480,7 +477,7 @@ const MasterScreen = () => {
         porDia[dia] = { atendimentos: 0, valor: 0 };
       }
       porDia[dia].atendimentos++;
-      porDia[dia].valor += a.valor || 0;
+      porDia[dia].valor += parseFloat(a.valor) || 0;
     });
 
     const relatorio = {
@@ -504,7 +501,6 @@ const MasterScreen = () => {
     };
 
     setRelatorioGerado(relatorio);
-    setMostrarRelatorio(true);
   };
 
   const imprimirRelatorio = () => {
@@ -799,7 +795,7 @@ const MasterScreen = () => {
                     <tr key={proc.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4 font-medium">{proc.nome}</td>
                       <td className="py-3 px-4 text-green-600 font-medium">
-                        R$ {(proc.valor || 0).toFixed(2)}
+                        R$ {parseFloat(proc.valor || 0).toFixed(2)}
                       </td>
                       <td className="py-3 px-4 text-gray-600">{proc.duracao || 30} min</td>
                       <td className="py-3 px-4">
@@ -931,14 +927,9 @@ const MasterScreen = () => {
             <Card title="Gerar Relatório" headerActions={
               <div className="flex gap-2">
                 {relatorioGerado && (
-                  <>
-                    <Button variant="secondary" size="sm" icon={Eye} onClick={() => setMostrarRelatorio(true)}>
-                      Visualizar
-                    </Button>
-                    <Button variant="secondary" size="sm" icon={Printer} onClick={imprimirRelatorio}>
-                      Imprimir
-                    </Button>
-                  </>
+                  <Button variant="secondary" size="sm" icon={Printer} onClick={imprimirRelatorio}>
+                    Imprimir
+                  </Button>
                 )}
               </div>
             }>
@@ -1025,7 +1016,7 @@ const MasterScreen = () => {
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg text-center">
                       <DollarSign className="w-8 h-8 mx-auto text-green-600 mb-2" />
-                      <p className="text-2xl font-bold text-green-800">R$ {relatorioGerado.resumo.valorTotal.toFixed(2)}</p>
+                      <p className="text-2xl font-bold text-green-800">R$ {parseFloat(relatorioGerado.resumo.valorTotal || 0).toFixed(2)}</p>
                       <p className="text-green-600 text-sm">Valor Total</p>
                     </div>
                     <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg text-center">
@@ -1035,7 +1026,7 @@ const MasterScreen = () => {
                     </div>
                     <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg text-center">
                       <TrendingUp className="w-8 h-8 mx-auto text-orange-600 mb-2" />
-                      <p className="text-2xl font-bold text-orange-800">R$ {relatorioGerado.resumo.ticketMedio.toFixed(2)}</p>
+                      <p className="text-2xl font-bold text-orange-800">R$ {parseFloat(relatorioGerado.resumo.ticketMedio || 0).toFixed(2)}</p>
                       <p className="text-orange-600 text-sm">Ticket Médio</p>
                     </div>
                   </div>
@@ -1069,7 +1060,7 @@ const MasterScreen = () => {
                                 </span>
                               </td>
                               <td className="py-3 px-4 text-right text-green-600 font-medium">
-                                R$ {item.valor.toFixed(2)}
+                                R$ {parseFloat(item.valor || 0).toFixed(2)}
                               </td>
                             </tr>
                           ))}
@@ -1102,10 +1093,10 @@ const MasterScreen = () => {
                                 </span>
                               </td>
                               <td className="py-3 px-4 text-right text-gray-600">
-                                R$ {item.valorUnitario.toFixed(2)}
+                                R$ {parseFloat(item.valorUnitario || 0).toFixed(2)}
                               </td>
                               <td className="py-3 px-4 text-right text-green-600 font-medium">
-                                R$ {item.valorTotal.toFixed(2)}
+                                R$ {parseFloat(item.valorTotal || 0).toFixed(2)}
                               </td>
                             </tr>
                           ))}
@@ -1145,7 +1136,7 @@ const MasterScreen = () => {
                                 </span>
                               </td>
                               <td className="py-3 px-4 text-right text-green-600 font-medium">
-                                R$ {item.valor.toFixed(2)}
+                                R$ {parseFloat(item.valor || 0).toFixed(2)}
                               </td>
                             </tr>
                           ))}
@@ -1177,7 +1168,7 @@ const MasterScreen = () => {
                                 </span>
                               </td>
                               <td className="py-3 px-4 text-right text-green-600 font-medium">
-                                R$ {item.valor.toFixed(2)}
+                                R$ {parseFloat(item.valor || 0).toFixed(2)}
                               </td>
                             </tr>
                           ))}
@@ -1261,9 +1252,15 @@ const MasterScreen = () => {
                           <Button
                             size="sm"
                             variant={usuario.acessoRelatorios ? 'danger' : 'success'}
-                            onClick={() => {
-                              editarUsuario(usuario.id, { acessoRelatorios: !usuario.acessoRelatorios });
-                              toast.success(`Acesso ${usuario.acessoRelatorios ? 'revogado' : 'liberado'} para ${usuario.nome}`);
+                            onClick={async () => {
+                              try {
+                                const resultado = await editarUsuario(usuario.id, { acessoRelatorios: !usuario.acessoRelatorios });
+                                if (resultado.success) {
+                                  toast.success(`Acesso ${usuario.acessoRelatorios ? 'revogado' : 'liberado'} para ${usuario.nome}`);
+                                }
+                              } catch (err) {
+                                toast.error('Erro ao atualizar acesso');
+                              }
                             }}
                           >
                             {usuario.acessoRelatorios ? 'Revogar' : 'Liberar'}

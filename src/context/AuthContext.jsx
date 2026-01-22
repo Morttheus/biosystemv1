@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const { usuario } = await apiService.verificarToken();
           setUsuarioLogado(usuario);
-          carregarUsuarios();
+          await carregarUsuarios();
         } catch (err) {
           apiService.clearToken();
           setUsuarioLogado(null);
