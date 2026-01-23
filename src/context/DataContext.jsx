@@ -616,42 +616,77 @@ export const DataProvider = ({ children }) => {
   };
 
   // ============ FUNÇÕES DE CHAMADAS DE PACIENTES ============
-  const registrarChamada = (pacienteId, pacienteNome, medicoId, medicoNome, clinicaId) => {
-    // Gera ID com valor seguro (não usa Date.now() que causa overflow)
-    const novaChamada = {
-      id: Math.floor(Math.random() * 1000000) + 1,
-      pacienteId,
-      pacienteNome,
-      medicoId,
-      medicoNome,
-      clinicaId,
-      dataHora: new Date().toISOString(),
-      ativa: true,
-    };
-
-    setChamadas(prev => [novaChamada, ...prev]);
-    setChamadaAtual(novaChamada);
-
-    // Salva no localStorage para sincronizar entre abas
+  const registrarChamada = async (pacienteId, pacienteNome, medicoId, medicoNome, clinicaId) => {
     try {
-      localStorage.setItem('biosystem_chamada_atual', JSON.stringify(novaChamada));
-    } catch (e) {
-      console.error('Erro ao salvar chamada no localStorage:', e);
-    }
+      // Registra via API para funcionar entre dispositivos diferentes
+      const resultado = await apiService.registrarChamada({
+        pacienteId,
+        pacienteNome,
+        medicoId,
+        medicoNome,
+        clinicaId
+      });
 
-    // Desativa a chamada após 30 segundos
-    setTimeout(() => {
-      setChamadaAtual(null);
-      setChamadas(prev => prev.map(c => c.id === novaChamada.id ? { ...c, ativa: false } : c));
-      // Remove do localStorage
-      try {
-        localStorage.removeItem('biosystem_chamada_atual');
-      } catch (e) {
-        console.error('Erro ao remover chamada do localStorage:', e);
+      if (resultado.chamada) {
+        const novaChamada = resultado.chamada;
+        setChamadas(prev => [novaChamada, ...prev]);
+        setChamadaAtual(novaChamada);
+
+        // Também salva no localStorage para sincronização local (mesma máquina)
+        try {
+          localStorage.setItem('biosystem_chamada_atual', JSON.stringify(novaChamada));
+        } catch (e) {
+          console.error('Erro ao salvar chamada no localStorage:', e);
+        }
+
+        // Desativa a chamada localmente após 30 segundos
+        setTimeout(() => {
+          setChamadaAtual(null);
+          setChamadas(prev => prev.map(c => c.id === novaChamada.id ? { ...c, ativa: false } : c));
+          try {
+            localStorage.removeItem('biosystem_chamada_atual');
+          } catch (e) {
+            console.error('Erro ao remover chamada do localStorage:', e);
+          }
+        }, 30000);
+
+        return novaChamada;
       }
-    }, 30000); // 30 segundos
+    } catch (err) {
+      console.error('Erro ao registrar chamada via API:', err);
+      // Fallback para localStorage se API falhar
+      const novaChamada = {
+        id: Math.floor(Math.random() * 1000000) + 1,
+        pacienteId,
+        pacienteNome,
+        medicoId,
+        medicoNome,
+        clinicaId,
+        dataHora: new Date().toISOString(),
+        ativa: true,
+      };
 
-    return novaChamada;
+      setChamadas(prev => [novaChamada, ...prev]);
+      setChamadaAtual(novaChamada);
+
+      try {
+        localStorage.setItem('biosystem_chamada_atual', JSON.stringify(novaChamada));
+      } catch (e) {
+        console.error('Erro ao salvar chamada no localStorage:', e);
+      }
+
+      setTimeout(() => {
+        setChamadaAtual(null);
+        setChamadas(prev => prev.map(c => c.id === novaChamada.id ? { ...c, ativa: false } : c));
+        try {
+          localStorage.removeItem('biosystem_chamada_atual');
+        } catch (e) {
+          console.error('Erro ao remover chamada do localStorage:', e);
+        }
+      }, 30000);
+
+      return novaChamada;
+    }
   };
 
   // Escuta mudanças no localStorage para sincronizar chamadas entre abas

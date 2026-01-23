@@ -126,8 +126,8 @@ const ConsultorioScreen = () => {
       // Busca paciente pelo ID correto
       const paciente = pacientes.find(p => p.id === pacienteId);
 
-      // Registra a chamada no painel de sala de espera
-      registrarChamada(
+      // Registra a chamada no painel de sala de espera (agora usa API)
+      await registrarChamada(
         pacienteId,
         pacienteNome,
         medicoId,
@@ -152,14 +152,14 @@ const ConsultorioScreen = () => {
   };
 
   // Chamar novamente o paciente atual (quando ele não viu a chamada)
-  const handleChamarNovamente = () => {
+  const handleChamarNovamente = async () => {
     if (!pacienteAtual || !atendimentoAtual) return;
 
     const pacienteNome = atendimentoAtual.pacienteNome || atendimentoAtual.paciente_nome || pacienteAtual.nome;
     const pacienteId = atendimentoAtual.pacienteId || atendimentoAtual.paciente_id || pacienteAtual.id;
 
-    // Registra nova chamada no painel
-    registrarChamada(
+    // Registra nova chamada no painel (agora usa API)
+    await registrarChamada(
       pacienteId,
       pacienteNome,
       medicoId,

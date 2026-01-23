@@ -260,6 +260,25 @@ class ApiService {
   async deletarProcedimento(id) {
     return this.request('DELETE', `/procedimentos/${id}`);
   }
+
+  // ========== CHAMADAS (PAINEL SALA DE ESPERA) ==========
+  async obterChamadaAtiva(clinicaId = null) {
+    const query = clinicaId ? `?clinica_id=${clinicaId}` : '';
+    return this.request('GET', `/chamadas${query}`);
+  }
+
+  async obterHistoricoChamadas(clinicaId = null) {
+    const query = clinicaId ? `?clinica_id=${clinicaId}` : '';
+    return this.request('GET', `/chamadas/historico${query}`);
+  }
+
+  async registrarChamada(dados) {
+    return this.request('POST', '/chamadas', dados);
+  }
+
+  async desativarChamada(id) {
+    return this.request('PUT', `/chamadas/${id}/desativar`);
+  }
 }
 
 const apiService = new ApiService();

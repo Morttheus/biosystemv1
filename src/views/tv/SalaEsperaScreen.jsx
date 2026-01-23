@@ -2,55 +2,81 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
+import apiService from '../../services/api';
 import { Volume2, Clock, User, Stethoscope, LogOut } from 'lucide-react';
 
 const SalaEsperaScreen = () => {
-  const { chamadaAtual, obterChamadasDia, getClinicaIdUsuario } = useData();
+  const { chamadaAtual, getClinicaIdUsuario } = useData();
   const { logout } = useAuth();
   const [tempoRestante, setTempoRestante] = useState(30);
   const [exibirChamada, setExibirChamada] = useState(false);
-  const [chamadaLocal, setChamadaLocal] = useState(null);
+  const [chamadaAPI, setChamadaAPI] = useState(null);
+  const [historicoChamadas, setHistoricoChamadas] = useState([]);
 
   // Obtém a clínica do usuário painel
   const clinicaIdPainel = getClinicaIdUsuario();
 
-  // Polling para verificar localStorage (para sincronização em tempo real)
+  // Polling para verificar chamadas na API (funciona entre dispositivos diferentes)
   useEffect(() => {
-    const verificarChamada = () => {
+    const verificarChamadaAPI = async () => {
       try {
-        const chamadaSalva = localStorage.getItem('biosystem_chamada_atual');
-        if (chamadaSalva) {
-          const chamada = JSON.parse(chamadaSalva);
-          // Verifica se a chamada ainda é válida (menos de 30 segundos)
-          const agora = new Date();
-          const dataChamada = new Date(chamada.dataHora);
-          const diffSegundos = (agora - dataChamada) / 1000;
-
-          if (diffSegundos < 30) {
-            setChamadaLocal(chamada);
-          } else {
-            setChamadaLocal(null);
-            localStorage.removeItem('biosystem_chamada_atual');
-          }
+        // Busca chamada ativa na API
+        const chamada = await apiService.obterChamadaAtiva(clinicaIdPainel);
+        if (chamada && chamada.ativa) {
+          setChamadaAPI(chamada);
         } else {
-          setChamadaLocal(null);
+          setChamadaAPI(null);
         }
       } catch (e) {
-        console.error('Erro ao verificar chamada:', e);
+        // Se API falhar, tenta localStorage como fallback
+        try {
+          const chamadaSalva = localStorage.getItem('biosystem_chamada_atual');
+          if (chamadaSalva) {
+            const chamada = JSON.parse(chamadaSalva);
+            const agora = new Date();
+            const dataChamada = new Date(chamada.dataHora);
+            const diffSegundos = (agora - dataChamada) / 1000;
+            if (diffSegundos < 30 && chamada.clinicaId === clinicaIdPainel) {
+              setChamadaAPI(chamada);
+            } else {
+              setChamadaAPI(null);
+            }
+          }
+        } catch (localErr) {
+          console.error('Erro ao verificar chamada local:', localErr);
+        }
+      }
+    };
+
+    // Busca histórico de chamadas
+    const carregarHistorico = async () => {
+      try {
+        const historico = await apiService.obterHistoricoChamadas(clinicaIdPainel);
+        if (Array.isArray(historico)) {
+          setHistoricoChamadas(historico);
+        }
+      } catch (e) {
+        // Silencia erro de histórico
       }
     };
 
     // Verifica imediatamente
-    verificarChamada();
+    verificarChamadaAPI();
+    carregarHistorico();
 
-    // Polling a cada 500ms para capturar chamadas rapidamente
-    const interval = setInterval(verificarChamada, 500);
+    // Polling a cada 1 segundo para capturar chamadas da API
+    const interval = setInterval(verificarChamadaAPI, 1000);
+    // Atualiza histórico a cada 5 segundos
+    const historicoInterval = setInterval(carregarHistorico, 5000);
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      clearInterval(interval);
+      clearInterval(historicoInterval);
+    };
+  }, [clinicaIdPainel]);
 
-  // Usa chamadaLocal do localStorage OU chamadaAtual do context
-  const chamadaAtiva = chamadaLocal || chamadaAtual;
+  // Usa chamadaAPI da API OU chamadaAtual do context
+  const chamadaAtiva = chamadaAPI || chamadaAtual;
 
   // Filtra a chamada atual para mostrar apenas da mesma clínica
   const chamadaAtualFiltrada = chamadaAtiva && chamadaAtiva.clinicaId === clinicaIdPainel ? chamadaAtiva : null;
@@ -107,8 +133,8 @@ const SalaEsperaScreen = () => {
     }
   };
 
-  // Filtra chamadas do dia pela clínica do usuário painel
-  const chamadasDia = obterChamadasDia().filter(c => c.clinicaId === clinicaIdPainel);
+  // Usa histórico de chamadas da API (já filtrado por clínica)
+  const chamadasDia = historicoChamadas;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-900 via-cyan-900 to-teal-900 flex flex-col items-center justify-center p-4">
