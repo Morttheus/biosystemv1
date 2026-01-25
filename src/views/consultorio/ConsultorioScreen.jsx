@@ -1,5 +1,5 @@
 // src/views/consultorio/ConsultorioScreen.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import Card from '../../components/Card';
@@ -32,7 +32,22 @@ const ConsultorioScreen = () => {
     finalizarAtendimento,
     obterProntuarioPaciente,
     getClinicaIdUsuario,
+    atualizarFila,
   } = useData();
+
+  // Polling para atualizar a fila em tempo real (a cada 3 segundos)
+  useEffect(() => {
+    // Atualiza imediatamente ao montar
+    atualizarFila();
+
+    // Configura polling a cada 3 segundos
+    const intervalo = setInterval(() => {
+      atualizarFila();
+    }, 3000);
+
+    // Limpa o intervalo ao desmontar
+    return () => clearInterval(intervalo);
+  }, [atualizarFila]);
 
   const [pacienteAtual, setPacienteAtual] = useState(null);
   const [atendimentoAtual, setAtendimentoAtual] = useState(null);

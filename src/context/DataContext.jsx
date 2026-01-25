@@ -849,6 +849,7 @@ export const DataProvider = ({ children }) => {
     obterAtendimentoAtual,
     finalizarAtendimento,
     removerDaFila,
+    atualizarFila: carregarFila,
 
     // Funções de Prontuário
     obterProntuarioPaciente,

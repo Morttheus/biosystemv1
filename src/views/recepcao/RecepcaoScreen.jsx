@@ -1,5 +1,5 @@
 // src/views/recepcao/RecepcaoScreen.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import Card from '../../components/Card';
@@ -30,7 +30,17 @@ const RecepcaoScreen = () => {
     buscarPacientePorCPF,
     cadastrarPaciente,
     adicionarNaFila,
+    atualizarFila,
   } = useData();
+
+  // Polling para atualizar a fila em tempo real (a cada 5 segundos)
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      atualizarFila();
+    }, 5000);
+
+    return () => clearInterval(intervalo);
+  }, [atualizarFila]);
 
   const [abaAtiva, setAbaAtiva] = useState('cadastro');
   const [cpfBusca, setCpfBusca] = useState('');
