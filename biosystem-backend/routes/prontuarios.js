@@ -12,9 +12,9 @@ router.get('/', authenticate, async (req, res) => {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
-    
+
     const { paciente_id, clinica_id } = req.query;
-    let query = 'SELECT id, paciente_id, medico_id, clinica_id, data, descricao, ativo FROM prontuarios WHERE ativo = true';
+    let query = 'SELECT id, paciente_id, medico_id, clinica_id, data, descricao, valor, procedimento_id, ativo FROM prontuarios WHERE ativo = true';
     const params = [];
     let paramIndex = 1;
 
@@ -43,17 +43,20 @@ router.get('/', authenticate, async (req, res) => {
 // ➕ CRIAR PRONTUÁRIO
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { pacienteId, medicoId, clinicaId, descricao } = req.body;
+    const { pacienteId, medicoId, clinicaId, descricao, valor, procedimentoId } = req.body;
 
     if (!pacienteId || !clinicaId) {
       return res.status(400).json({ error: 'Paciente e clínica são obrigatórios' });
     }
 
+    // Converte valor para número ou null
+    const valorNumerico = valor !== undefined && valor !== null ? parseFloat(valor) : null;
+
     const resultado = await pool.query(
-      `INSERT INTO prontuarios (paciente_id, medico_id, clinica_id, data, descricao, ativo)
-       VALUES ($1, $2, $3, NOW(), $4, true)
-       RETURNING id, paciente_id, medico_id, clinica_id, data, descricao`,
-      [pacienteId, medicoId || null, clinicaId, descricao || '']
+      `INSERT INTO prontuarios (paciente_id, medico_id, clinica_id, data, descricao, valor, procedimento_id, ativo)
+       VALUES ($1, $2, $3, NOW(), $4, $5, $6, true)
+       RETURNING id, paciente_id, medico_id, clinica_id, data, descricao, valor, procedimento_id`,
+      [pacienteId, medicoId || null, clinicaId, descricao || '', valorNumerico, procedimentoId || null]
     );
 
     const prontuario = resultado.rows[0];
@@ -71,14 +74,19 @@ router.post('/', authenticate, async (req, res) => {
 router.put('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const { descricao } = req.body;
+    const { descricao, valor, procedimentoId } = req.body;
+
+    // Converte valor para número ou null
+    const valorNumerico = valor !== undefined && valor !== null ? parseFloat(valor) : null;
 
     const resultado = await pool.query(
-      `UPDATE prontuarios 
-       SET descricao = COALESCE($1, descricao)
-       WHERE id = $2 AND ativo = true
-       RETURNING id, paciente_id, medico_id, clinica_id, data, descricao`,
-      [descricao || null, id]
+      `UPDATE prontuarios
+       SET descricao = COALESCE($1, descricao),
+           valor = COALESCE($2, valor),
+           procedimento_id = COALESCE($3, procedimento_id)
+       WHERE id = $4 AND ativo = true
+       RETURNING id, paciente_id, medico_id, clinica_id, data, descricao, valor, procedimento_id`,
+      [descricao || null, valorNumerico, procedimentoId || null, id]
     );
 
     if (resultado.rows.length === 0) {

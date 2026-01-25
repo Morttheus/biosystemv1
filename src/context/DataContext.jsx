@@ -447,6 +447,8 @@ export const DataProvider = ({ children }) => {
         pacienteId: pacienteId,
         medicoId: atendMedicoId,
         clinicaId: clinicaId,
+        valor: valor,
+        procedimentoId: procedimentoId,
         descricao: JSON.stringify({
           diagnostico: dadosConsulta.diagnostico || '',
           prescricao: dadosConsulta.prescricao || '',
@@ -520,6 +522,14 @@ export const DataProvider = ({ children }) => {
     const paciente = pacientes.find(pac => pac.id === pPacienteId);
     const medico = medicos.find(med => med.id === pMedicoId);
 
+    // Obtém procedimento_id com suporte a ambos formatos
+    const pProcedimentoId = p.procedimentoId || p.procedimento_id;
+
+    // Obtém valor: prioriza campo separado do banco, depois JSON da descrição
+    const valorDoBanco = parseFloat(p.valor);
+    const valorDaDescricao = parseFloat(dadosDescricao.valor);
+    const valorFinal = !isNaN(valorDoBanco) && valorDoBanco > 0 ? valorDoBanco : (!isNaN(valorDaDescricao) ? valorDaDescricao : 0);
+
     return {
       ...p,
       id: p.id,
@@ -529,6 +539,8 @@ export const DataProvider = ({ children }) => {
       medico_id: pMedicoId,
       clinicaId: pClinicaId,
       clinica_id: pClinicaId,
+      procedimentoId: pProcedimentoId,
+      procedimento_id: pProcedimentoId,
       data: pData,
       // Dados parseados da descrição
       diagnostico: dadosDescricao.diagnostico || '',
@@ -537,7 +549,7 @@ export const DataProvider = ({ children }) => {
       retorno: dadosDescricao.retorno || '',
       anamnese: dadosDescricao.anamnese || {},
       procedimento: dadosDescricao.procedimento || 'Consulta',
-      valor: parseFloat(dadosDescricao.valor) || 0,
+      valor: valorFinal,
       // Nomes (prioriza da descrição, depois busca nas listas)
       pacienteNome: dadosDescricao.pacienteNome || paciente?.nome || 'Paciente',
       pacienteCPF: paciente?.cpf || '',
