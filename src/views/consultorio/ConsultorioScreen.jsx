@@ -488,7 +488,7 @@ const ConsultorioScreen = () => {
                     }`}
                   >
                     <Eye size={20} />
-                    Exame Oftalmológico
+                    Óculos
                   </button>
                   <button
                     onClick={() => setAbaAtiva('diagnostico')}
