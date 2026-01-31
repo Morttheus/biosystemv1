@@ -309,31 +309,27 @@ const ProntuarioScreen = () => {
                                 )}
 
                                 {/* Exame Oftalmológico */}
-                                {consulta.anamnese && (consulta.anamnese.avOlhoDireitoSC || consulta.anamnese.pressaoOlhoDireito) && (
+                                {consulta.anamnese && (consulta.anamnese.oculosOdEsf || consulta.anamnese.pressaoOlhoDireito) && (
                                   <div className="mb-4">
                                     <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
                                       <Eye size={16} /> Exame Oftalmológico
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                      {/* Acuidade Visual */}
+                                      {/* Óculos */}
                                       <div className="p-3 bg-blue-50 rounded-lg">
-                                        <h5 className="font-medium text-blue-800 mb-2">Acuidade Visual</h5>
-                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                        <h5 className="font-medium text-blue-800 mb-2">Óculos</h5>
+                                        <div className="space-y-2 text-sm">
                                           <div>
-                                            <span className="text-gray-500">OD SC:</span>
-                                            <span className="ml-1">{consulta.anamnese.avOlhoDireitoSC || '-'}</span>
+                                            <span className="text-gray-600 font-medium">OD:</span>
+                                            <span className="ml-2">ESF: {consulta.anamnese.oculosOdEsf || '-'}</span>
+                                            <span className="ml-2">CIL: {consulta.anamnese.oculosOdCil || '-'}</span>
+                                            <span className="ml-2">EIXO: {consulta.anamnese.oculosOdEixo || '-'}</span>
                                           </div>
                                           <div>
-                                            <span className="text-gray-500">OD CC:</span>
-                                            <span className="ml-1">{consulta.anamnese.avOlhoDireitoCC || '-'}</span>
-                                          </div>
-                                          <div>
-                                            <span className="text-gray-500">OE SC:</span>
-                                            <span className="ml-1">{consulta.anamnese.avOlhoEsquerdoSC || '-'}</span>
-                                          </div>
-                                          <div>
-                                            <span className="text-gray-500">OE CC:</span>
-                                            <span className="ml-1">{consulta.anamnese.avOlhoEsquerdoCC || '-'}</span>
+                                            <span className="text-gray-600 font-medium">OE:</span>
+                                            <span className="ml-2">ESF: {consulta.anamnese.oculosOeEsf || '-'}</span>
+                                            <span className="ml-2">CIL: {consulta.anamnese.oculosOeCil || '-'}</span>
+                                            <span className="ml-2">EIXO: {consulta.anamnese.oculosOeEixo || '-'}</span>
                                           </div>
                                         </div>
                                       </div>

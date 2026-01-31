@@ -66,11 +66,13 @@ const ConsultorioScreen = () => {
     cirurgiasAnteriores: '',
     usaOculos: false,
     usaLentesContato: false,
-    // Acuidade Visual
-    avOlhoDireitoSC: '',
-    avOlhoDireitoCC: '',
-    avOlhoEsquerdoSC: '',
-    avOlhoEsquerdoCC: '',
+    // Óculos
+    oculosOdEsf: '',
+    oculosOdCil: '',
+    oculosOdEixo: '',
+    oculosOeEsf: '',
+    oculosOeCil: '',
+    oculosOeEixo: '',
     // Tonometria
     pressaoOlhoDireito: '',
     pressaoOlhoEsquerdo: '',
@@ -219,10 +221,12 @@ const ConsultorioScreen = () => {
         cirurgiasAnteriores: '',
         usaOculos: false,
         usaLentesContato: false,
-        avOlhoDireitoSC: '',
-        avOlhoDireitoCC: '',
-        avOlhoEsquerdoSC: '',
-        avOlhoEsquerdoCC: '',
+        oculosOdEsf: '',
+        oculosOdCil: '',
+        oculosOdEixo: '',
+        oculosOeEsf: '',
+        oculosOeCil: '',
+        oculosOeEixo: '',
         pressaoOlhoDireito: '',
         pressaoOlhoEsquerdo: '',
         biomicroscopiaOD: '',
@@ -605,45 +609,69 @@ const ConsultorioScreen = () => {
 
                 {abaAtiva === 'exame' && (
                   <div className="space-y-6">
-                    {/* Acuidade Visual */}
-                    <Card title="Acuidade Visual">
+                    {/* Óculos */}
+                    <Card title="Óculos">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="p-4 bg-blue-50 rounded-lg">
                           <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
                             <Eye size={20} /> Olho Direito (OD)
                           </h4>
-                          <div className="grid grid-cols-2 gap-3">
-                            <Input
-                              label="Sem Correção (SC)"
-                              value={anamnese.avOlhoDireitoSC}
-                              onChange={(e) => setAnamnese({ ...anamnese, avOlhoDireitoSC: e.target.value })}
-                              placeholder="20/20"
-                            />
-                            <Input
-                              label="Com Correção (CC)"
-                              value={anamnese.avOlhoDireitoCC}
-                              onChange={(e) => setAnamnese({ ...anamnese, avOlhoDireitoCC: e.target.value })}
-                              placeholder="20/20"
-                            />
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="text-center">
+                              <span className="block text-xs font-semibold text-blue-700 mb-1">ESF</span>
+                              <Input
+                                value={anamnese.oculosOdEsf}
+                                onChange={(e) => setAnamnese({ ...anamnese, oculosOdEsf: e.target.value })}
+                                placeholder="+0.00"
+                              />
+                            </div>
+                            <div className="text-center">
+                              <span className="block text-xs font-semibold text-blue-700 mb-1">CIL</span>
+                              <Input
+                                value={anamnese.oculosOdCil}
+                                onChange={(e) => setAnamnese({ ...anamnese, oculosOdCil: e.target.value })}
+                                placeholder="-0.00"
+                              />
+                            </div>
+                            <div className="text-center">
+                              <span className="block text-xs font-semibold text-blue-700 mb-1">EIXO</span>
+                              <Input
+                                value={anamnese.oculosOdEixo}
+                                onChange={(e) => setAnamnese({ ...anamnese, oculosOdEixo: e.target.value })}
+                                placeholder="0°"
+                              />
+                            </div>
                           </div>
                         </div>
                         <div className="p-4 bg-green-50 rounded-lg">
                           <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
                             <Eye size={20} /> Olho Esquerdo (OE)
                           </h4>
-                          <div className="grid grid-cols-2 gap-3">
-                            <Input
-                              label="Sem Correção (SC)"
-                              value={anamnese.avOlhoEsquerdoSC}
-                              onChange={(e) => setAnamnese({ ...anamnese, avOlhoEsquerdoSC: e.target.value })}
-                              placeholder="20/20"
-                            />
-                            <Input
-                              label="Com Correção (CC)"
-                              value={anamnese.avOlhoEsquerdoCC}
-                              onChange={(e) => setAnamnese({ ...anamnese, avOlhoEsquerdoCC: e.target.value })}
-                              placeholder="20/20"
-                            />
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="text-center">
+                              <span className="block text-xs font-semibold text-green-700 mb-1">ESF</span>
+                              <Input
+                                value={anamnese.oculosOeEsf}
+                                onChange={(e) => setAnamnese({ ...anamnese, oculosOeEsf: e.target.value })}
+                                placeholder="+0.00"
+                              />
+                            </div>
+                            <div className="text-center">
+                              <span className="block text-xs font-semibold text-green-700 mb-1">CIL</span>
+                              <Input
+                                value={anamnese.oculosOeCil}
+                                onChange={(e) => setAnamnese({ ...anamnese, oculosOeCil: e.target.value })}
+                                placeholder="-0.00"
+                              />
+                            </div>
+                            <div className="text-center">
+                              <span className="block text-xs font-semibold text-green-700 mb-1">EIXO</span>
+                              <Input
+                                value={anamnese.oculosOeEixo}
+                                onChange={(e) => setAnamnese({ ...anamnese, oculosOeEixo: e.target.value })}
+                                placeholder="0°"
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
