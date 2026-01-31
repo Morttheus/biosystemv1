@@ -73,6 +73,7 @@ const ConsultorioScreen = () => {
     oculosOeEsf: '',
     oculosOeCil: '',
     oculosOeEixo: '',
+    oculosAdicao: '',
     // Tonometria
     pressaoOlhoDireito: '',
     pressaoOlhoEsquerdo: '',
@@ -227,6 +228,7 @@ const ConsultorioScreen = () => {
         oculosOeEsf: '',
         oculosOeCil: '',
         oculosOeEixo: '',
+        oculosAdicao: '',
         pressaoOlhoDireito: '',
         pressaoOlhoEsquerdo: '',
         biomicroscopiaOD: '',
@@ -672,6 +674,18 @@ const ConsultorioScreen = () => {
                                 placeholder="0°"
                               />
                             </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-4 p-4 bg-orange-50 rounded-lg">
+                        <div className="flex items-center gap-4">
+                          <span className="font-semibold text-orange-800">Adição</span>
+                          <div className="w-32">
+                            <Input
+                              value={anamnese.oculosAdicao}
+                              onChange={(e) => setAnamnese({ ...anamnese, oculosAdicao: e.target.value })}
+                              placeholder="+0.00"
+                            />
                           </div>
                         </div>
                       </div>

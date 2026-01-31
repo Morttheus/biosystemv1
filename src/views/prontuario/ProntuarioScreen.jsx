@@ -331,6 +331,12 @@ const ProntuarioScreen = () => {
                                             <span className="ml-2">CIL: {consulta.anamnese.oculosOeCil || '-'}</span>
                                             <span className="ml-2">EIXO: {consulta.anamnese.oculosOeEixo || '-'}</span>
                                           </div>
+                                          {consulta.anamnese.oculosAdicao && (
+                                            <div className="pt-1 border-t border-blue-200">
+                                              <span className="text-gray-600 font-medium">Adição:</span>
+                                              <span className="ml-2">{consulta.anamnese.oculosAdicao}</span>
+                                            </div>
+                                          )}
                                         </div>
                                       </div>
 
