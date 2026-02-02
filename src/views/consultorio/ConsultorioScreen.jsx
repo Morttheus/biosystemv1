@@ -19,7 +19,8 @@ import {
   ChevronDown,
   History,
   LogOut,
-  Volume2
+  Volume2,
+  Printer
 } from 'lucide-react';
 
 const ConsultorioScreen = () => {
@@ -27,6 +28,7 @@ const ConsultorioScreen = () => {
   const {
     filaAtendimento,
     pacientes,
+    medicos,
     chamarPaciente,
     registrarChamada,
     finalizarAtendimento,
@@ -491,13 +493,13 @@ const ConsultorioScreen = () => {
                     Óculos
                   </button>
                   <button
-                    onClick={() => setAbaAtiva('diagnostico')}
+                    onClick={() => setAbaAtiva('prescricao')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                      abaAtiva === 'diagnostico' ? 'bg-teal-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      abaAtiva === 'prescricao' ? 'bg-teal-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
                     }`}
                   >
                     <Stethoscope size={20} />
-                    Diagnóstico e Prescrição
+                    Prescrição
                   </button>
                   <button
                     onClick={() => setAbaAtiva('historico')}
@@ -604,6 +606,20 @@ const ConsultorioScreen = () => {
                           />
                           <span className="text-sm">Usa lentes de contato</span>
                         </label>
+                      </div>
+
+                      <div className="pt-4 border-t">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Diagnóstico *
+                        </label>
+                        <textarea
+                          value={consulta.diagnostico}
+                          onChange={(e) => setConsulta({ ...consulta, diagnostico: e.target.value })}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          rows={3}
+                          placeholder="Diagnóstico do paciente..."
+                          required
+                        />
                       </div>
                     </div>
                   </Card>
@@ -771,49 +787,73 @@ const ConsultorioScreen = () => {
                   </div>
                 )}
 
-                {abaAtiva === 'diagnostico' && (
-                  <Card title="Diagnóstico e Prescrição">
+                {abaAtiva === 'prescricao' && (
+                  <Card title="Prescrição / Receituário">
                     <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Diagnóstico *
-                        </label>
-                        <textarea
-                          value={consulta.diagnostico}
-                          onChange={(e) => setConsulta({ ...consulta, diagnostico: e.target.value })}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                          rows={3}
-                          placeholder="Diagnóstico do paciente..."
-                          required
-                        />
+                      {/* Prévia do Receituário */}
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-white">
+                        <div className="text-center mb-6">
+                          <h2 className="text-2xl font-bold text-gray-800">PRESCRIÇÃO</h2>
+                          <p className="text-sm text-gray-500 mt-1">Data: {new Date().toLocaleDateString('pt-BR')}</p>
+                        </div>
+
+                        {/* Dados do Paciente */}
+                        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                          <h3 className="font-semibold text-gray-700 mb-2">Paciente</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                            <p><strong>Nome:</strong> {pacienteAtual?.nome || '-'}</p>
+                            <p><strong>CPF:</strong> {formatarCPF(pacienteAtual?.cpf) || '-'}</p>
+                            <p><strong>Data Nasc.:</strong> {formatarData(pacienteAtual?.dataNascimento) || '-'}</p>
+                          </div>
+                        </div>
+
+                        {/* Área de Prescrição */}
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Prescrição Médica
+                          </label>
+                          <textarea
+                            value={consulta.prescricao}
+                            onChange={(e) => setConsulta({ ...consulta, prescricao: e.target.value })}
+                            className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 min-h-[200px]"
+                            rows={8}
+                            placeholder="Digite a prescrição médica aqui...
+
+Exemplo:
+1. Colírio X - 1 gota em cada olho, 3x ao dia, por 7 dias
+2. Pomada Y - Aplicar à noite, por 14 dias
+3. Retorno em 30 dias para reavaliação"
+                          />
+                        </div>
+
+                        {/* Observações */}
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Observações
+                          </label>
+                          <textarea
+                            value={consulta.observacoes}
+                            onChange={(e) => setConsulta({ ...consulta, observacoes: e.target.value })}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            rows={2}
+                            placeholder="Observações adicionais..."
+                          />
+                        </div>
+
+                        {/* Dados do Médico */}
+                        <div className="mt-8 pt-4 border-t border-gray-300 text-center">
+                          <div className="inline-block border-t-2 border-gray-400 pt-2 px-8">
+                            <p className="font-semibold text-gray-800">
+                              Dr(a). {usuarioLogado?.nome}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              CRM: {medicos.find(m => m.id === medicoId)?.crm || usuarioLogado?.crm || '-'}
+                            </p>
+                          </div>
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Prescrição / Conduta
-                        </label>
-                        <textarea
-                          value={consulta.prescricao}
-                          onChange={(e) => setConsulta({ ...consulta, prescricao: e.target.value })}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                          rows={4}
-                          placeholder="Medicamentos, colírios, procedimentos recomendados..."
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Observações
-                        </label>
-                        <textarea
-                          value={consulta.observacoes}
-                          onChange={(e) => setConsulta({ ...consulta, observacoes: e.target.value })}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                          rows={2}
-                          placeholder="Observações adicionais..."
-                        />
-                      </div>
-
+                      {/* Data de Retorno */}
                       <Input
                         label="Data de Retorno"
                         type="date"
@@ -821,15 +861,79 @@ const ConsultorioScreen = () => {
                         onChange={(e) => setConsulta({ ...consulta, retorno: e.target.value })}
                       />
 
-                      <div className="pt-4 border-t">
+                      {/* Botões de Ação */}
+                      <div className="pt-4 border-t flex gap-4">
+                        <Button
+                          icon={Printer}
+                          variant="primary"
+                          size="lg"
+                          onClick={() => {
+                            const medicoInfo = medicos.find(m => m.id === medicoId);
+                            const conteudoImpressao = `
+                              <!DOCTYPE html>
+                              <html>
+                              <head>
+                                <title>Prescrição Médica</title>
+                                <style>
+                                  @page { size: A4; margin: 20mm; }
+                                  body { font-family: Arial, sans-serif; padding: 20px; }
+                                  .header { text-align: center; margin-bottom: 30px; }
+                                  .header h1 { font-size: 24px; margin-bottom: 5px; }
+                                  .header .data { font-size: 12px; color: #666; }
+                                  .paciente { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 30px; }
+                                  .paciente h3 { margin: 0 0 10px 0; font-size: 14px; }
+                                  .paciente-info { display: flex; gap: 30px; font-size: 13px; }
+                                  .prescricao { min-height: 300px; white-space: pre-wrap; line-height: 1.8; font-size: 14px; margin-bottom: 30px; }
+                                  .observacoes { font-size: 13px; color: #555; margin-bottom: 40px; font-style: italic; }
+                                  .medico { text-align: center; margin-top: 60px; }
+                                  .medico .assinatura { border-top: 2px solid #333; display: inline-block; padding-top: 10px; min-width: 250px; }
+                                  .medico .nome { font-weight: bold; font-size: 14px; }
+                                  .medico .crm { font-size: 12px; color: #666; }
+                                  @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+                                </style>
+                              </head>
+                              <body>
+                                <div class="header">
+                                  <h1>PRESCRIÇÃO</h1>
+                                  <p class="data">Data: ${new Date().toLocaleDateString('pt-BR')}</p>
+                                </div>
+                                <div class="paciente">
+                                  <h3>Paciente</h3>
+                                  <div class="paciente-info">
+                                    <span><strong>Nome:</strong> ${pacienteAtual?.nome || '-'}</span>
+                                    <span><strong>CPF:</strong> ${formatarCPF(pacienteAtual?.cpf) || '-'}</span>
+                                    <span><strong>Data Nasc.:</strong> ${formatarData(pacienteAtual?.dataNascimento) || '-'}</span>
+                                  </div>
+                                </div>
+                                <div class="prescricao">${consulta.prescricao || 'Nenhuma prescrição informada.'}</div>
+                                ${consulta.observacoes ? `<div class="observacoes"><strong>Observações:</strong> ${consulta.observacoes}</div>` : ''}
+                                <div class="medico">
+                                  <div class="assinatura">
+                                    <p class="nome">Dr(a). ${usuarioLogado?.nome}</p>
+                                    <p class="crm">CRM: ${medicoInfo?.crm || usuarioLogado?.crm || '-'}</p>
+                                  </div>
+                                </div>
+                              </body>
+                              </html>
+                            `;
+                            const janelaImpressao = window.open('', '_blank');
+                            janelaImpressao.document.write(conteudoImpressao);
+                            janelaImpressao.document.close();
+                            janelaImpressao.focus();
+                            janelaImpressao.print();
+                          }}
+                          className="flex-1"
+                        >
+                          Imprimir Receituário
+                        </Button>
                         <Button
                           icon={Save}
                           variant="success"
-                          fullWidth
                           size="lg"
                           onClick={handleFinalizarAtendimento}
+                          className="flex-1"
                         >
-                          Finalizar Atendimento e Salvar no Prontuário
+                          Finalizar Atendimento
                         </Button>
                       </div>
                     </div>
