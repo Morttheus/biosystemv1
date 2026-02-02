@@ -626,165 +626,84 @@ const ConsultorioScreen = () => {
                 )}
 
                 {abaAtiva === 'exame' && (
-                  <div className="space-y-6">
-                    {/* Óculos */}
-                    <Card title="Óculos">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                          <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
-                            <Eye size={20} /> Olho Direito (OD)
-                          </h4>
-                          <div className="grid grid-cols-3 gap-3">
-                            <div className="text-center">
-                              <span className="block text-xs font-semibold text-blue-700 mb-1">ESF</span>
-                              <Input
-                                value={anamnese.oculosOdEsf}
-                                onChange={(e) => setAnamnese({ ...anamnese, oculosOdEsf: e.target.value })}
-                                placeholder="+0.00"
-                              />
-                            </div>
-                            <div className="text-center">
-                              <span className="block text-xs font-semibold text-blue-700 mb-1">CIL</span>
-                              <Input
-                                value={anamnese.oculosOdCil}
-                                onChange={(e) => setAnamnese({ ...anamnese, oculosOdCil: e.target.value })}
-                                placeholder="-0.00"
-                              />
-                            </div>
-                            <div className="text-center">
-                              <span className="block text-xs font-semibold text-blue-700 mb-1">EIXO</span>
-                              <Input
-                                value={anamnese.oculosOdEixo}
-                                onChange={(e) => setAnamnese({ ...anamnese, oculosOdEixo: e.target.value })}
-                                placeholder="0°"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="p-4 bg-green-50 rounded-lg">
-                          <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
-                            <Eye size={20} /> Olho Esquerdo (OE)
-                          </h4>
-                          <div className="grid grid-cols-3 gap-3">
-                            <div className="text-center">
-                              <span className="block text-xs font-semibold text-green-700 mb-1">ESF</span>
-                              <Input
-                                value={anamnese.oculosOeEsf}
-                                onChange={(e) => setAnamnese({ ...anamnese, oculosOeEsf: e.target.value })}
-                                placeholder="+0.00"
-                              />
-                            </div>
-                            <div className="text-center">
-                              <span className="block text-xs font-semibold text-green-700 mb-1">CIL</span>
-                              <Input
-                                value={anamnese.oculosOeCil}
-                                onChange={(e) => setAnamnese({ ...anamnese, oculosOeCil: e.target.value })}
-                                placeholder="-0.00"
-                              />
-                            </div>
-                            <div className="text-center">
-                              <span className="block text-xs font-semibold text-green-700 mb-1">EIXO</span>
-                              <Input
-                                value={anamnese.oculosOeEixo}
-                                onChange={(e) => setAnamnese({ ...anamnese, oculosOeEixo: e.target.value })}
-                                placeholder="0°"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-4 p-4 bg-orange-50 rounded-lg">
-                        <div className="flex items-center gap-4">
-                          <span className="font-semibold text-orange-800">Adição</span>
-                          <div className="w-32">
+                  <Card title="Prescrição de Óculos">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                          <Eye size={20} /> Olho Direito (OD)
+                        </h4>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="text-center">
+                            <span className="block text-xs font-semibold text-blue-700 mb-1">ESF</span>
                             <Input
-                              value={anamnese.oculosAdicao}
-                              onChange={(e) => setAnamnese({ ...anamnese, oculosAdicao: e.target.value })}
+                              value={anamnese.oculosOdEsf}
+                              onChange={(e) => setAnamnese({ ...anamnese, oculosOdEsf: e.target.value })}
                               placeholder="+0.00"
+                            />
+                          </div>
+                          <div className="text-center">
+                            <span className="block text-xs font-semibold text-blue-700 mb-1">CIL</span>
+                            <Input
+                              value={anamnese.oculosOdCil}
+                              onChange={(e) => setAnamnese({ ...anamnese, oculosOdCil: e.target.value })}
+                              placeholder="-0.00"
+                            />
+                          </div>
+                          <div className="text-center">
+                            <span className="block text-xs font-semibold text-blue-700 mb-1">EIXO</span>
+                            <Input
+                              value={anamnese.oculosOdEixo}
+                              onChange={(e) => setAnamnese({ ...anamnese, oculosOdEixo: e.target.value })}
+                              placeholder="0°"
                             />
                           </div>
                         </div>
                       </div>
-                    </Card>
-
-                    {/* Tonometria */}
-                    <Card title="Tonometria (Pressão Intraocular)">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Input
-                          label="Olho Direito (OD) - mmHg"
-                          value={anamnese.pressaoOlhoDireito}
-                          onChange={(e) => setAnamnese({ ...anamnese, pressaoOlhoDireito: e.target.value })}
-                          placeholder="Ex: 14"
-                        />
-                        <Input
-                          label="Olho Esquerdo (OE) - mmHg"
-                          value={anamnese.pressaoOlhoEsquerdo}
-                          onChange={(e) => setAnamnese({ ...anamnese, pressaoOlhoEsquerdo: e.target.value })}
-                          placeholder="Ex: 15"
-                        />
-                      </div>
-                    </Card>
-
-                    {/* Biomicroscopia */}
-                    <Card title="Biomicroscopia">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Olho Direito (OD)
-                          </label>
-                          <textarea
-                            value={anamnese.biomicroscopiaOD}
-                            onChange={(e) => setAnamnese({ ...anamnese, biomicroscopiaOD: e.target.value })}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                            rows={3}
-                            placeholder="Córnea, conjuntiva, câmara anterior, íris, cristalino..."
-                          />
+                      <div className="p-4 bg-green-50 rounded-lg">
+                        <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                          <Eye size={20} /> Olho Esquerdo (OE)
+                        </h4>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="text-center">
+                            <span className="block text-xs font-semibold text-green-700 mb-1">ESF</span>
+                            <Input
+                              value={anamnese.oculosOeEsf}
+                              onChange={(e) => setAnamnese({ ...anamnese, oculosOeEsf: e.target.value })}
+                              placeholder="+0.00"
+                            />
+                          </div>
+                          <div className="text-center">
+                            <span className="block text-xs font-semibold text-green-700 mb-1">CIL</span>
+                            <Input
+                              value={anamnese.oculosOeCil}
+                              onChange={(e) => setAnamnese({ ...anamnese, oculosOeCil: e.target.value })}
+                              placeholder="-0.00"
+                            />
+                          </div>
+                          <div className="text-center">
+                            <span className="block text-xs font-semibold text-green-700 mb-1">EIXO</span>
+                            <Input
+                              value={anamnese.oculosOeEixo}
+                              onChange={(e) => setAnamnese({ ...anamnese, oculosOeEixo: e.target.value })}
+                              placeholder="0°"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Olho Esquerdo (OE)
-                          </label>
-                          <textarea
-                            value={anamnese.biomicroscopiaOE}
-                            onChange={(e) => setAnamnese({ ...anamnese, biomicroscopiaOE: e.target.value })}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                            rows={3}
-                            placeholder="Córnea, conjuntiva, câmara anterior, íris, cristalino..."
+                      </div>
+                    </div>
+                    <div className="mt-4 p-4 bg-orange-50 rounded-lg">
+                      <div className="flex items-center gap-4">
+                        <span className="font-semibold text-orange-800">Adição</span>
+                        <div className="w-32">
+                          <Input
+                            value={anamnese.oculosAdicao}
+                            onChange={(e) => setAnamnese({ ...anamnese, oculosAdicao: e.target.value })}
+                            placeholder="+0.00"
                           />
                         </div>
                       </div>
-                    </Card>
-
-                    {/* Fundoscopia */}
-                    <Card title="Fundoscopia">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Olho Direito (OD)
-                          </label>
-                          <textarea
-                            value={anamnese.fundoscopiaOD}
-                            onChange={(e) => setAnamnese({ ...anamnese, fundoscopiaOD: e.target.value })}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                            rows={3}
-                            placeholder="Papila, mácula, vasos, retina periférica..."
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Olho Esquerdo (OE)
-                          </label>
-                          <textarea
-                            value={anamnese.fundoscopiaOE}
-                            onChange={(e) => setAnamnese({ ...anamnese, fundoscopiaOE: e.target.value })}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                            rows={3}
-                            placeholder="Papila, mácula, vasos, retina periférica..."
-                          />
-                        </div>
-                      </div>
-                    </Card>
-                  </div>
+                    </div>
+                  </Card>
                 )}
 
                 {abaAtiva === 'prescricao' && (
