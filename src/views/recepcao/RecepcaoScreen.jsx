@@ -148,8 +148,16 @@ const RecepcaoScreen = () => {
   };
 
   const handleCadastrar = async () => {
-    if (!form.nome || !form.cpf) {
-      setMensagem({ tipo: 'erro', texto: 'Nome e CPF são obrigatórios!' });
+    if (!form.nome) {
+      setMensagem({ tipo: 'erro', texto: 'Nome completo é obrigatório!' });
+      return;
+    }
+    if (!form.cpf) {
+      setMensagem({ tipo: 'erro', texto: 'CPF é obrigatório!' });
+      return;
+    }
+    if (!form.dataNascimento) {
+      setMensagem({ tipo: 'erro', texto: 'Data de nascimento é obrigatória!' });
       return;
     }
 
@@ -355,6 +363,7 @@ const RecepcaoScreen = () => {
                     type="date"
                     value={form.dataNascimento}
                     onChange={(e) => setForm({ ...form, dataNascimento: e.target.value })}
+                    required
                     disabled={!!pacienteEncontrado}
                   />
                   <Input
