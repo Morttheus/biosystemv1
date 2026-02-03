@@ -724,7 +724,19 @@ const ConsultorioScreen = () => {
                   <Card title="Prescrição / Receituário">
                     <div className="space-y-4">
                       {/* Prévia do Receituário */}
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-white">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-white relative overflow-hidden">
+                        {/* Marca d'água */}
+                        <div
+                          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                          style={{ zIndex: 0 }}
+                        >
+                          <img
+                            src="/logo-biovisao.png"
+                            alt=""
+                            className="w-80 h-auto opacity-[0.06]"
+                          />
+                        </div>
+                        <div className="relative" style={{ zIndex: 1 }}>
                         <div className="text-center mb-6">
                           <h2 className="text-2xl font-bold text-gray-800">PRESCRIÇÃO</h2>
                           <p className="text-sm text-gray-500 mt-1">Data: {new Date().toLocaleDateString('pt-BR')}</p>
@@ -783,6 +795,7 @@ Exemplo:
                               CRM: {medicos.find(m => m.id === medicoId)?.crm || usuarioLogado?.crm || '-'}
                             </p>
                           </div>
+                        </div>
                         </div>
                       </div>
 
