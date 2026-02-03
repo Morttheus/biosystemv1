@@ -132,6 +132,20 @@ const ConsultorioScreen = () => {
     a => matchMedico(a) && a.status === 'atendendo'
   );
 
+  // Restaura o atendimento em andamento ao recarregar a página
+  useEffect(() => {
+    if (emAtendimento && !pacienteAtual) {
+      const pacienteId = emAtendimento.pacienteId || emAtendimento.paciente_id;
+      const paciente = pacientes.find(p => p.id === pacienteId);
+
+      if (paciente) {
+        setPacienteAtual(paciente);
+        setAtendimentoAtual(emAtendimento);
+        setAbaAtiva('anamnese');
+      }
+    }
+  }, [emAtendimento, pacientes, pacienteAtual]);
+
   const handleChamarPaciente = async (atendimento) => {
     // Obtém IDs corretamente (suporta ambos formatos)
     const pacienteId = atendimento.pacienteId || atendimento.paciente_id;
