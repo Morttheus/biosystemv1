@@ -795,11 +795,22 @@ Exemplo:
                                 <title>Prescrição Médica</title>
                                 <style>
                                   @page { size: A4; margin: 20mm; }
-                                  body { font-family: Arial, sans-serif; padding: 20px; }
+                                  body { font-family: Arial, sans-serif; padding: 20px; position: relative; }
+                                  .watermark {
+                                    position: fixed;
+                                    top: 50%;
+                                    left: 50%;
+                                    transform: translate(-50%, -50%);
+                                    opacity: 0.06;
+                                    z-index: -1;
+                                    width: 400px;
+                                    height: auto;
+                                    pointer-events: none;
+                                  }
                                   .header { text-align: center; margin-bottom: 30px; }
                                   .header h1 { font-size: 24px; margin-bottom: 5px; }
                                   .header .data { font-size: 12px; color: #666; }
-                                  .paciente { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 30px; }
+                                  .paciente { background: rgba(245, 245, 245, 0.8); padding: 15px; border-radius: 8px; margin-bottom: 30px; }
                                   .paciente h3 { margin: 0 0 10px 0; font-size: 14px; }
                                   .paciente-info { display: flex; gap: 30px; font-size: 13px; }
                                   .prescricao { min-height: 300px; white-space: pre-wrap; line-height: 1.8; font-size: 14px; margin-bottom: 30px; }
@@ -808,10 +819,14 @@ Exemplo:
                                   .medico .assinatura { border-top: 2px solid #333; display: inline-block; padding-top: 10px; min-width: 250px; }
                                   .medico .nome { font-weight: bold; font-size: 14px; }
                                   .medico .crm { font-size: 12px; color: #666; }
-                                  @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+                                  @media print {
+                                    body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+                                    .watermark { position: fixed; }
+                                  }
                                 </style>
                               </head>
                               <body>
+                                <img src="/logo-biovisao.png" alt="" class="watermark" />
                                 <div class="header">
                                   <h1>PRESCRIÇÃO</h1>
                                   <p class="data">Data: ${new Date().toLocaleDateString('pt-BR')}</p>
