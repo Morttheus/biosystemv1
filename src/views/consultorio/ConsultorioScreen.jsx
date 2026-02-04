@@ -278,9 +278,9 @@ const ConsultorioScreen = () => {
   const historicoConsultas = pacienteAtual ? obterProntuarioPaciente(pacienteAtual.id) : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-cyan-100">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-cyan-100 dark:from-gray-900 dark:to-gray-800 transition-colors">
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-700 to-cyan-700 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-teal-700 to-cyan-700 dark:from-gray-800 dark:to-gray-900 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div>
@@ -313,14 +313,14 @@ const ConsultorioScreen = () => {
       <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Mensagem */}
         {mensagem.texto && (
-          <div className={`mb-6 p-4 rounded-lg flex items-center gap-2 ${
-            mensagem.tipo === 'sucesso' ? 'bg-green-100 text-green-800' :
-            mensagem.tipo === 'erro' ? 'bg-red-100 text-red-800' :
-            'bg-blue-100 text-blue-800'
+          <div className={`mb-6 p-4 rounded-lg flex items-center gap-2 transition-colors ${
+            mensagem.tipo === 'sucesso' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+            mensagem.tipo === 'erro' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+            'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
           }`}>
             {mensagem.tipo === 'sucesso' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
             {mensagem.texto}
-            <button onClick={() => setMensagem({ tipo: '', texto: '' })} className="ml-auto">
+            <button onClick={() => setMensagem({ tipo: '', texto: '' })} className="ml-auto text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
               &times;
             </button>
           </div>
@@ -367,15 +367,15 @@ const ConsultorioScreen = () => {
                   return (
                     <div
                       key={atendimento.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
                           {index + 1}
                         </span>
                         <div>
-                          <p className="font-medium text-sm">{pacienteNome}</p>
-                          <p className="text-xs text-gray-500">{procedimentoNome}</p>
+                          <p className="font-medium text-sm text-gray-900 dark:text-gray-100">{pacienteNome}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{procedimentoNome}</p>
                         </div>
                       </div>
                       <Button
@@ -390,7 +390,7 @@ const ConsultorioScreen = () => {
                   );
                 })}
                 {aguardando.length === 0 && (
-                  <p className="text-center text-gray-500 py-4 text-sm">Nenhum paciente aguardando</p>
+                  <p className="text-center text-gray-500 dark:text-gray-400 py-4 text-sm">Nenhum paciente aguardando</p>
                 )}
               </div>
             </Card>
@@ -399,7 +399,7 @@ const ConsultorioScreen = () => {
             <Card title="Atendidos Hoje" className="mt-4">
               <button
                 onClick={() => setExpandirAtendidos(!expandirAtendidos)}
-                className="w-full flex items-center justify-between p-2 hover:bg-gray-50 rounded"
+                className="w-full flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 transition-colors"
               >
                 <span className="text-sm font-medium">Ver histórico ({atendidos.length})</span>
                 {expandirAtendidos ? <ChevronDown size={18} /> : <ChevronDown size={18} className="transform rotate-180" />}
@@ -412,17 +412,17 @@ const ConsultorioScreen = () => {
                     return (
                       <div
                         key={atendimento.id}
-                        className="p-2 bg-green-50 rounded-lg text-sm border-l-4 border-green-600"
+                        className="p-2 bg-green-50 dark:bg-green-900/30 rounded-lg text-sm border-l-4 border-green-600"
                       >
-                        <p className="font-medium text-green-900">{pacienteNome}</p>
-                        <p className="text-xs text-green-700">
+                        <p className="font-medium text-green-900 dark:text-green-300">{pacienteNome}</p>
+                        <p className="text-xs text-green-700 dark:text-green-400">
                           {horarioFinal ? new Date(horarioFinal).toLocaleTimeString('pt-BR') : '-'}
                         </p>
                       </div>
                     );
                   })}
                   {atendidos.length === 0 && (
-                    <p className="text-center text-gray-500 py-4 text-sm">Nenhum paciente atendido ainda</p>
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-4 text-sm">Nenhum paciente atendido ainda</p>
                   )}
                 </div>
               )}
@@ -433,9 +433,9 @@ const ConsultorioScreen = () => {
           <div className="lg:col-span-3">
             {!pacienteAtual && !emAtendimento ? (
               <Card>
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                   <Eye size={64} className="mx-auto mb-4 opacity-30" />
-                  <h3 className="text-xl font-semibold mb-2">Nenhum paciente em atendimento</h3>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-700 dark:text-gray-300">Nenhum paciente em atendimento</h3>
                   <p>Selecione um paciente da fila para iniciar o atendimento</p>
                 </div>
               </Card>
@@ -449,18 +449,18 @@ const ConsultorioScreen = () => {
                         <User size={32} className="text-teal-600" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold">{pacienteAtual?.nome}</h3>
-                        <p className="text-gray-500">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{pacienteAtual?.nome}</h3>
+                        <p className="text-gray-500 dark:text-gray-400">
                           CPF: {formatarCPF(pacienteAtual?.cpf)} | Prontuário: {pacienteAtual?.prontuarioId}
                         </p>
                         <div className="flex gap-4 mt-2 text-sm">
                           {pacienteAtual?.telefone && (
-                            <span className="flex items-center gap-1 text-gray-600">
+                            <span className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                               <Phone size={14} /> {pacienteAtual.telefone}
                             </span>
                           )}
                           {pacienteAtual?.dataNascimento && (
-                            <span className="flex items-center gap-1 text-gray-600">
+                            <span className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                               <Calendar size={14} /> {formatarData(pacienteAtual.dataNascimento)}
                             </span>
                           )}
@@ -468,10 +468,10 @@ const ConsultorioScreen = () => {
                       </div>
                     </div>
                     <div className="text-right flex flex-col items-end gap-2">
-                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                      <span className="bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 px-3 py-1 rounded-full text-sm font-medium">
                         Em Atendimento
                       </span>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {atendimentoAtual?.procedimentoNome}
                       </p>
                       <Button
@@ -487,11 +487,11 @@ const ConsultorioScreen = () => {
                 </Card>
 
                 {/* Abas */}
-                <div className="bg-white rounded-lg p-2 shadow mb-6 flex flex-wrap gap-2">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-2 shadow mb-6 flex flex-wrap gap-2 transition-colors">
                   <button
                     onClick={() => setAbaAtiva('anamnese')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                      abaAtiva === 'anamnese' ? 'bg-teal-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      abaAtiva === 'anamnese' ? 'bg-teal-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     <FileText size={20} />
@@ -500,7 +500,7 @@ const ConsultorioScreen = () => {
                   <button
                     onClick={() => setAbaAtiva('exame')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                      abaAtiva === 'exame' ? 'bg-teal-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      abaAtiva === 'exame' ? 'bg-teal-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     <Eye size={20} />
@@ -509,7 +509,7 @@ const ConsultorioScreen = () => {
                   <button
                     onClick={() => setAbaAtiva('prescricao')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                      abaAtiva === 'prescricao' ? 'bg-teal-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      abaAtiva === 'prescricao' ? 'bg-teal-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     <Stethoscope size={20} />
@@ -518,7 +518,7 @@ const ConsultorioScreen = () => {
                   <button
                     onClick={() => setAbaAtiva('historico')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                      abaAtiva === 'historico' ? 'bg-teal-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      abaAtiva === 'historico' ? 'bg-teal-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     <History size={20} />
@@ -531,26 +531,26 @@ const ConsultorioScreen = () => {
                   <Card title="Anamnese">
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Queixa Principal *
                         </label>
                         <textarea
                           value={anamnese.queixaPrincipal}
                           onChange={(e) => setAnamnese({ ...anamnese, queixaPrincipal: e.target.value })}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
                           rows={3}
                           placeholder="Descreva a queixa principal do paciente..."
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           História da Doença Atual
                         </label>
                         <textarea
                           value={anamnese.historiaDoencaAtual}
                           onChange={(e) => setAnamnese({ ...anamnese, historiaDoencaAtual: e.target.value })}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
                           rows={3}
                           placeholder="Evolução dos sintomas, tratamentos anteriores..."
                         />
@@ -558,25 +558,25 @@ const ConsultorioScreen = () => {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Histórico Ocular
                           </label>
                           <textarea
                             value={anamnese.historicoOcular}
                             onChange={(e) => setAnamnese({ ...anamnese, historicoOcular: e.target.value })}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
                             rows={2}
                             placeholder="Doenças oculares anteriores..."
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Histórico Familiar
                           </label>
                           <textarea
                             value={anamnese.historicoFamiliar}
                             onChange={(e) => setAnamnese({ ...anamnese, historicoFamiliar: e.target.value })}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
                             rows={2}
                             placeholder="Glaucoma, catarata, etc na família..."
                           />
@@ -623,13 +623,13 @@ const ConsultorioScreen = () => {
                       </div>
 
                       <div className="pt-4 border-t">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Diagnóstico *
                         </label>
                         <textarea
                           value={consulta.diagnostico}
                           onChange={(e) => setConsulta({ ...consulta, diagnostico: e.target.value })}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
                           rows={3}
                           placeholder="Diagnóstico do paciente..."
                           required
@@ -717,6 +717,121 @@ const ConsultorioScreen = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Botão Imprimir Receita de Óculos */}
+                    <div className="mt-6 pt-4 border-t">
+                      <Button
+                        icon={Printer}
+                        variant="primary"
+                        fullWidth
+                        size="lg"
+                        onClick={() => {
+                          const medicoInfo = medicos.find(m => m.id === medicoId);
+                          const conteudoImpressao = `
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                              <title>Receita de Óculos</title>
+                              <style>
+                                @page { size: A4; margin: 15mm; }
+                                body { font-family: Arial, sans-serif; padding: 20px; }
+                                .watermark {
+                                  position: fixed;
+                                  top: 50%;
+                                  left: 50%;
+                                  transform: translate(-50%, -50%);
+                                  opacity: 0.06;
+                                  z-index: -1;
+                                  width: 350px;
+                                  height: auto;
+                                }
+                                .header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #0d9488; padding-bottom: 15px; }
+                                .header h1 { font-size: 22px; color: #0d9488; margin-bottom: 5px; }
+                                .header .data { font-size: 12px; color: #666; }
+                                .paciente { background: #f0fdfa; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #0d9488; }
+                                .paciente h3 { margin: 0 0 10px 0; font-size: 14px; color: #0d9488; }
+                                .paciente-info { font-size: 13px; }
+                                .paciente-info span { display: inline-block; margin-right: 25px; }
+                                .receita-table { width: 100%; border-collapse: collapse; margin: 25px 0; }
+                                .receita-table th { background: #0d9488; color: white; padding: 12px; text-align: center; font-size: 13px; }
+                                .receita-table td { border: 1px solid #ddd; padding: 12px; text-align: center; font-size: 14px; }
+                                .receita-table .olho { background: #f0fdfa; font-weight: bold; color: #0d9488; }
+                                .adicao { background: #fff7ed; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0; border: 2px dashed #f97316; }
+                                .adicao span { font-size: 14px; color: #c2410c; }
+                                .adicao strong { font-size: 18px; color: #ea580c; }
+                                .observacoes { font-size: 13px; color: #555; margin: 20px 0; padding: 15px; background: #f9fafb; border-radius: 8px; }
+                                .medico { text-align: center; margin-top: 50px; }
+                                .medico .assinatura { border-top: 2px solid #333; display: inline-block; padding-top: 10px; min-width: 280px; }
+                                .medico .nome { font-weight: bold; font-size: 14px; }
+                                .medico .crm { font-size: 12px; color: #666; }
+                                .validade { text-align: center; font-size: 11px; color: #888; margin-top: 30px; }
+                                @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+                              </style>
+                            </head>
+                            <body>
+                              <img src="/logo-biovisao.png" alt="" class="watermark" />
+                              <div class="header">
+                                <h1>RECEITA DE ÓCULOS</h1>
+                                <p class="data">Data: ${new Date().toLocaleDateString('pt-BR')}</p>
+                              </div>
+                              <div class="paciente">
+                                <h3>Dados do Paciente</h3>
+                                <div class="paciente-info">
+                                  <span><strong>Nome:</strong> ${pacienteAtual?.nome || '-'}</span>
+                                  <span><strong>CPF:</strong> ${formatarCPF(pacienteAtual?.cpf) || '-'}</span>
+                                  <span><strong>Nasc.:</strong> ${formatarData(pacienteAtual?.dataNascimento) || '-'}</span>
+                                </div>
+                              </div>
+                              <table class="receita-table">
+                                <thead>
+                                  <tr>
+                                    <th></th>
+                                    <th>ESFÉRICO (ESF)</th>
+                                    <th>CILÍNDRICO (CIL)</th>
+                                    <th>EIXO</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr>
+                                    <td class="olho">OD (Olho Direito)</td>
+                                    <td>${anamnese.oculosOdEsf || '-'}</td>
+                                    <td>${anamnese.oculosOdCil || '-'}</td>
+                                    <td>${anamnese.oculosOdEixo || '-'}</td>
+                                  </tr>
+                                  <tr>
+                                    <td class="olho">OE (Olho Esquerdo)</td>
+                                    <td>${anamnese.oculosOeEsf || '-'}</td>
+                                    <td>${anamnese.oculosOeCil || '-'}</td>
+                                    <td>${anamnese.oculosOeEixo || '-'}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                              ${anamnese.oculosAdicao ? `
+                              <div class="adicao">
+                                <span>ADIÇÃO (para perto): </span>
+                                <strong>${anamnese.oculosAdicao}</strong>
+                              </div>
+                              ` : ''}
+                              <div class="medico">
+                                <div class="assinatura">
+                                  <p class="nome">Dr(a). ${usuarioLogado?.nome}</p>
+                                  <p class="crm">CRM: ${medicoInfo?.crm || usuarioLogado?.crm || '-'}</p>
+                                </div>
+                              </div>
+                              <p class="validade">Esta receita é válida por 6 meses a partir da data de emissão.</p>
+                            </body>
+                            </html>
+                          `;
+                          const janelaImpressao = window.open('', '_blank');
+                          janelaImpressao.document.write(conteudoImpressao);
+                          janelaImpressao.document.close();
+                          janelaImpressao.focus();
+                          janelaImpressao.print();
+                        }}
+                      >
+                        Imprimir Receita de Óculos
+                      </Button>
+                    </div>
                   </Card>
                 )}
 
@@ -779,7 +894,7 @@ Exemplo:
                           <textarea
                             value={consulta.observacoes}
                             onChange={(e) => setConsulta({ ...consulta, observacoes: e.target.value })}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
                             rows={2}
                             placeholder="Observações adicionais..."
                           />

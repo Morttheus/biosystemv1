@@ -19,14 +19,16 @@ import {
   LogOut,
   Building2,
   UserPlus,
-  Shield
+  Shield,
+  LayoutDashboard
 } from 'lucide-react';
+import DashboardScreen from '../dashboard/DashboardScreen';
 
 const AdminScreen = () => {
   const { logout, usuarioLogado, obterUsuarios, adicionarUsuario, editarUsuario, excluirUsuario } = useAuth();
   const { clinicas, medicos, adicionarMedico, editarMedico, excluirMedico } = useData();
 
-  const [abaAtiva, setAbaAtiva] = useState('usuarios');
+  const [abaAtiva, setAbaAtiva] = useState('dashboard');
   const [modalAberto, setModalAberto] = useState(null);
   const [itemEditando, setItemEditando] = useState(null);
   const [erro, setErro] = useState('');
@@ -56,6 +58,7 @@ const AdminScreen = () => {
   const medicosDaClinica = medicos.filter(m => m.clinicaId === usuarioLogado?.clinicaId);
 
   const abas = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'usuarios', label: 'Usuários', icon: Users },
     { id: 'medicos', label: 'Médicos', icon: Stethoscope },
   ];
@@ -203,12 +206,12 @@ const AdminScreen = () => {
 
   const getTipoBadgeColor = (tipo) => {
     const cores = {
-      'master': 'bg-purple-100 text-purple-800',
-      'admin': 'bg-blue-100 text-blue-800',
-      'usuario': 'bg-green-100 text-green-800',
-      'medico': 'bg-orange-100 text-orange-800'
+      'master': 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300',
+      'admin': 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300',
+      'usuario': 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300',
+      'medico': 'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-300'
     };
-    return cores[tipo] || 'bg-gray-100 text-gray-800';
+    return cores[tipo] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
   };
 
   return (
@@ -245,21 +248,21 @@ const AdminScreen = () => {
         {/* Info da Clínica */}
         <Card className="mb-6">
           <div className="flex items-center gap-4">
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <Building2 className="w-8 h-8 text-blue-600" />
+            <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-lg">
+              <Building2 className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-800">{minhaClinica?.nome}</h2>
-              <p className="text-gray-600">{minhaClinica?.endereco}</p>
-              <p className="text-gray-500 text-sm">{minhaClinica?.telefone}</p>
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">{minhaClinica?.nome}</h2>
+              <p className="text-gray-600 dark:text-gray-400">{minhaClinica?.endereco}</p>
+              <p className="text-gray-500 dark:text-gray-500 text-sm">{minhaClinica?.telefone}</p>
             </div>
             <div className="ml-auto text-right">
-              <p className="text-2xl font-bold text-blue-600">{usuariosDaClinica.length}</p>
-              <p className="text-gray-500 text-sm">Usuários</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{usuariosDaClinica.length}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Usuários</p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-orange-600">{medicosDaClinica.length}</p>
-              <p className="text-gray-500 text-sm">Médicos</p>
+              <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{medicosDaClinica.length}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Médicos</p>
             </div>
           </div>
         </Card>
@@ -285,6 +288,11 @@ const AdminScreen = () => {
           })}
         </div>
 
+        {/* Conteúdo - Dashboard */}
+        {abaAtiva === 'dashboard' && (
+          <DashboardScreen />
+        )}
+
         {/* Conteúdo - Usuários */}
         {abaAtiva === 'usuarios' && (
           <Card
@@ -298,18 +306,18 @@ const AdminScreen = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4">Nome</th>
-                    <th className="text-left py-3 px-4">Email</th>
-                    <th className="text-left py-3 px-4">Tipo</th>
-                    <th className="text-right py-3 px-4">Ações</th>
+                  <tr className="border-b border-gray-200 dark:border-gray-600">
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Nome</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Email</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Tipo</th>
+                    <th className="text-right py-3 px-4 text-gray-900 dark:text-gray-100">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {usuariosDaClinica.map(usuario => (
-                    <tr key={usuario.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium">{usuario.nome}</td>
-                      <td className="py-3 px-4 text-gray-600">{usuario.email}</td>
+                    <tr key={usuario.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <td className="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">{usuario.nome}</td>
+                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{usuario.email}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-full text-sm ${getTipoBadgeColor(usuario.tipo)}`}>
                           {getTipoLabel(usuario.tipo)}

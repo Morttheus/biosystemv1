@@ -2,6 +2,7 @@
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppProvider, useApp } from './context/AppContext';
 import { DataProvider } from './context/DataContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import LoginScreen from './views/auth/LoginScreen';
@@ -64,14 +65,16 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <AuthProvider>
-      <DataProvider>
-        <AppProvider>
-          <AppContent />
-          <ToastContainer />
-        </AppProvider>
-      </DataProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <DataProvider>
+          <AppProvider>
+            <AppContent />
+            <ToastContainer />
+          </AppProvider>
+        </DataProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

@@ -252,18 +252,18 @@ const RecepcaoScreen = () => {
     <Layout>
       <div className="space-y-6">
         {/* Info da Clínica */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-blue-800">
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 transition-colors">
+          <p className="text-blue-800 dark:text-blue-300">
             <strong>Clínica:</strong> {clinicaAtual?.nome || 'Não definida'}
           </p>
         </div>
 
         {/* Abas */}
-        <div className="bg-white rounded-lg p-2 shadow flex flex-wrap gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-2 shadow flex flex-wrap gap-2 transition-colors">
           <button
             onClick={() => setAbaAtiva('cadastro')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              abaAtiva === 'cadastro' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+              abaAtiva === 'cadastro' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             <UserPlus size={20} />
@@ -272,7 +272,7 @@ const RecepcaoScreen = () => {
           <button
             onClick={() => setAbaAtiva('fila')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              abaAtiva === 'fila' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+              abaAtiva === 'fila' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             <Users size={20} />
@@ -281,7 +281,7 @@ const RecepcaoScreen = () => {
           <button
             onClick={() => setAbaAtiva('pacientes')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              abaAtiva === 'pacientes' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+              abaAtiva === 'pacientes' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             <FileText size={20} />
@@ -291,11 +291,11 @@ const RecepcaoScreen = () => {
 
         {/* Mensagem */}
         {mensagem.texto && (
-          <div className={`p-4 rounded-lg flex items-center gap-2 ${
-            mensagem.tipo === 'sucesso' ? 'bg-green-100 text-green-800' :
-            mensagem.tipo === 'erro' ? 'bg-red-100 text-red-800' :
-            mensagem.tipo === 'aviso' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-blue-100 text-blue-800'
+          <div className={`p-4 rounded-lg flex items-center gap-2 transition-colors ${
+            mensagem.tipo === 'sucesso' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+            mensagem.tipo === 'erro' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+            mensagem.tipo === 'aviso' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
+            'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
           }`}>
             {mensagem.tipo === 'sucesso' ? <CheckCircle size={20} /> :
              mensagem.tipo === 'erro' ? <AlertCircle size={20} /> :
@@ -303,7 +303,7 @@ const RecepcaoScreen = () => {
             {mensagem.texto}
             <button
               onClick={() => setMensagem({ tipo: '', texto: '' })}
-              className="ml-auto text-gray-500 hover:text-gray-700"
+              className="ml-auto text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               &times;
             </button>
@@ -331,11 +331,11 @@ const RecepcaoScreen = () => {
               </div>
 
               {pacienteEncontrado && (
-                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <h4 className="font-semibold text-green-800 mb-2">Paciente Encontrado</h4>
-                  <p><strong>Nome:</strong> {pacienteEncontrado.nome}</p>
-                  <p><strong>ID:</strong> {pacienteEncontrado.id}</p>
-                  <p><strong>Telefone:</strong> {pacienteEncontrado.telefone || '-'}</p>
+                <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg transition-colors">
+                  <h4 className="font-semibold text-green-800 dark:text-green-300 mb-2">Paciente Encontrado</h4>
+                  <p className="text-gray-700 dark:text-gray-300"><strong>Nome:</strong> {pacienteEncontrado.nome}</p>
+                  <p className="text-gray-700 dark:text-gray-300"><strong>ID:</strong> {pacienteEncontrado.id}</p>
+                  <p className="text-gray-700 dark:text-gray-300"><strong>Telefone:</strong> {pacienteEncontrado.telefone || '-'}</p>
                 </div>
               )}
             </Card>
@@ -452,10 +452,10 @@ const RecepcaoScreen = () => {
                 return (
                 <div
                   key={atendimento.id}
-                  className={`flex items-center justify-between p-4 rounded-lg border ${
+                  className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
                     status === 'atendendo'
-                      ? 'bg-green-50 border-green-300'
-                      : 'bg-gray-50 border-gray-200'
+                      ? 'bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-700'
+                      : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -467,8 +467,8 @@ const RecepcaoScreen = () => {
                       {index + 1}
                     </span>
                     <div>
-                      <h4 className="font-semibold">{pacienteNome}</h4>
-                      <p className="text-sm text-gray-500">
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">{pacienteNome}</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {medicoNome ? `Dr(a). ${medicoNome}` : 'Médico não atribuído'}
                       </p>
                     </div>
@@ -481,7 +481,7 @@ const RecepcaoScreen = () => {
                     }`}>
                       {status === 'atendendo' ? 'Em Atendimento' : 'Aguardando'}
                     </span>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Chegou: {formatarHora(horarioChegada)}
                     </p>
                   </div>
@@ -489,7 +489,7 @@ const RecepcaoScreen = () => {
               );
               })}
               {filaClinica.length === 0 && (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                   <Users size={48} className="mx-auto mb-4 opacity-50" />
                   <p>Nenhum paciente na fila de espera</p>
                 </div>
@@ -504,20 +504,20 @@ const RecepcaoScreen = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4">Nome</th>
-                    <th className="text-left py-3 px-4">CPF</th>
-                    <th className="text-left py-3 px-4">Telefone</th>
-                    <th className="text-left py-3 px-4">Prontuário</th>
-                    <th className="text-left py-3 px-4">Consultas</th>
+                  <tr className="border-b border-gray-200 dark:border-gray-600">
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Nome</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">CPF</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Telefone</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Prontuário</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Consultas</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pacientes.map(paciente => (
-                    <tr key={paciente.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium">{paciente.nome}</td>
-                      <td className="py-3 px-4 text-gray-600">{formatarCPF(paciente.cpf)}</td>
-                      <td className="py-3 px-4 text-gray-600">
+                    <tr key={paciente.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <td className="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">{paciente.nome}</td>
+                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{formatarCPF(paciente.cpf)}</td>
+                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
                         {paciente.telefone ? (
                           <span className="flex items-center gap-1">
                             <Phone size={14} />
@@ -526,12 +526,12 @@ const RecepcaoScreen = () => {
                         ) : '-'}
                       </td>
                       <td className="py-3 px-4">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                        <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-sm">
                           {paciente.prontuarioId}
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm">
+                        <span className="bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-sm">
                           {paciente.historicoConsultas?.length || 0} consulta(s)
                         </span>
                       </td>
@@ -540,7 +540,7 @@ const RecepcaoScreen = () => {
                 </tbody>
               </table>
               {pacientes.length === 0 && (
-                <p className="text-center text-gray-500 py-8">Nenhum paciente cadastrado</p>
+                <p className="text-center text-gray-500 dark:text-gray-400 py-8">Nenhum paciente cadastrado</p>
               )}
             </div>
           </Card>

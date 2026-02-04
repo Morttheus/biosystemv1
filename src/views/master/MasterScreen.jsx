@@ -27,8 +27,10 @@ import {
   Download,
   TrendingUp,
   DollarSign,
-  Clock
+  Clock,
+  LayoutDashboard
 } from 'lucide-react';
+import DashboardScreen from '../dashboard/DashboardScreen';
 
 const MasterScreen = () => {
   const { logout, usuarioLogado, obterTodosUsuarios, adicionarUsuario, editarUsuario, excluirUsuario } = useAuth();
@@ -52,7 +54,7 @@ const MasterScreen = () => {
     todaFilaAtendimento,
   } = useData();
 
-  const [abaAtiva, setAbaAtiva] = useState('clinicas');
+  const [abaAtiva, setAbaAtiva] = useState('dashboard');
   const [modalAberto, setModalAberto] = useState(null);
   const [itemEditando, setItemEditando] = useState(null);
   const [erro, setErro] = useState('');
@@ -77,6 +79,7 @@ const MasterScreen = () => {
   const todosUsuarios = obterTodosUsuarios();
 
   const abas = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'clinicas', label: 'Clínicas', icon: Building2 },
     { id: 'usuarios', label: 'Usuários', icon: Users },
     { id: 'medicos', label: 'Médicos', icon: Stethoscope },
@@ -609,6 +612,11 @@ const MasterScreen = () => {
             );
           })}
         </div>
+
+        {/* Conteúdo - Dashboard */}
+        {abaAtiva === 'dashboard' && (
+          <DashboardScreen />
+        )}
 
         {/* Conteúdo das Abas */}
         {abaAtiva === 'clinicas' && (

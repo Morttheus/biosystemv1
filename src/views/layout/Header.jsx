@@ -4,6 +4,7 @@ import { LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import Button from '../../components/Button';
+import ThemeToggle from '../../components/ThemeToggle';
 
 const Header = () => {
   const { usuarioLogado, logout } = useAuth();
@@ -21,17 +22,18 @@ const Header = () => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-900 to-blue-700 text-white shadow-lg">
+    <div className="bg-gradient-to-r from-blue-900 to-blue-700 dark:from-gray-800 dark:to-gray-900 text-white shadow-lg transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold">BioSystem</h1>
-            <p className="text-blue-200 text-sm">
+            <p className="text-blue-200 dark:text-gray-400 text-sm">
               {getTipoUsuario()} - {usuarioLogado?.nome}
               {clinicaAtual && ` | ${clinicaAtual.nome}`}
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Button
               variant="danger"
               size="sm"
