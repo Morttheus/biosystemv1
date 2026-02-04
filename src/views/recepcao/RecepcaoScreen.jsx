@@ -7,6 +7,7 @@ import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Select from '../../components/Select';
 import Layout from '../layout/Layout';
+import AgendamentoScreen from '../agendamento/AgendamentoScreen';
 import {
   Search,
   UserPlus,
@@ -16,7 +17,8 @@ import {
   AlertCircle,
   Phone,
   FileText,
-  Loader2
+  Loader2,
+  Calendar
 } from 'lucide-react';
 
 const RecepcaoScreen = () => {
@@ -287,6 +289,15 @@ const RecepcaoScreen = () => {
             <FileText size={20} />
             Todos Pacientes
           </button>
+          <button
+            onClick={() => setAbaAtiva('agendamento')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              abaAtiva === 'agendamento' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            <Calendar size={20} />
+            Agendamento
+          </button>
         </div>
 
         {/* Mensagem */}
@@ -544,6 +555,11 @@ const RecepcaoScreen = () => {
               )}
             </div>
           </Card>
+        )}
+
+        {/* Aba Agendamento */}
+        {abaAtiva === 'agendamento' && (
+          <AgendamentoScreen />
         )}
       </div>
     </Layout>
