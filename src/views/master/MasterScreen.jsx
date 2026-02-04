@@ -31,6 +31,7 @@ import {
   LayoutDashboard
 } from 'lucide-react';
 import DashboardScreen from '../dashboard/DashboardScreen';
+import RelatoriosScreen from '../relatorios/RelatoriosScreen';
 
 const MasterScreen = () => {
   const { logout, usuarioLogado, obterTodosUsuarios, adicionarUsuario, editarUsuario, excluirUsuario } = useAuth();

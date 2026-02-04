@@ -20,9 +20,11 @@ import {
   Building2,
   UserPlus,
   Shield,
-  LayoutDashboard
+  LayoutDashboard,
+  FileText
 } from 'lucide-react';
 import DashboardScreen from '../dashboard/DashboardScreen';
+import RelatoriosScreen from '../relatorios/RelatoriosScreen';
 
 const AdminScreen = () => {
   const { logout, usuarioLogado, obterUsuarios, adicionarUsuario, editarUsuario, excluirUsuario } = useAuth();
@@ -61,6 +63,7 @@ const AdminScreen = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'usuarios', label: 'Usuários', icon: Users },
     { id: 'medicos', label: 'Médicos', icon: Stethoscope },
+    { id: 'relatorios', label: 'Relatórios', icon: FileText },
   ];
 
   const tiposUsuario = [
@@ -413,6 +416,11 @@ const AdminScreen = () => {
               )}
             </div>
           </Card>
+        )}
+
+        {/* Conteúdo - Relatórios */}
+        {abaAtiva === 'relatorios' && (
+          <RelatoriosScreen />
         )}
       </div>
 
