@@ -8,6 +8,7 @@ import Button from '../../components/Button';
 import Select from '../../components/Select';
 import Layout from '../layout/Layout';
 import AgendamentoScreen from '../agendamento/AgendamentoScreen';
+import Pagination from '../../components/Pagination';
 import {
   Search,
   UserPlus,
@@ -61,6 +62,11 @@ const RecepcaoScreen = () => {
     medicoId: '',
     procedimentoId: '',
   });
+
+  // Paginação de pacientes
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [itensPorPagina, setItensPorPagina] = useState(10);
+  const [buscaPacientes, setBuscaPacientes] = useState('');
 
   // Clínica do usuário logado (suporta ambos formatos)
   const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
@@ -510,52 +516,98 @@ const RecepcaoScreen = () => {
         )}
 
         {/* Aba Todos Pacientes */}
-        {abaAtiva === 'pacientes' && (
-          <Card title="Pacientes Cadastrados">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-600">
-                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Nome</th>
-                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">CPF</th>
-                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Telefone</th>
-                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Prontuário</th>
-                    <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Consultas</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pacientes.map(paciente => (
-                    <tr key={paciente.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                      <td className="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">{paciente.nome}</td>
-                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{formatarCPF(paciente.cpf)}</td>
-                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-                        {paciente.telefone ? (
-                          <span className="flex items-center gap-1">
-                            <Phone size={14} />
-                            {paciente.telefone}
-                          </span>
-                        ) : '-'}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-sm">
-                          {paciente.prontuarioId}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-sm">
-                          {paciente.historicoConsultas?.length || 0} consulta(s)
-                        </span>
-                      </td>
+        {abaAtiva === 'pacientes' && (() => {
+          // Filtrar pacientes pela busca
+          const pacientesFiltrados = buscaPacientes
+            ? pacientes.filter(p =>
+                p.nome?.toLowerCase().includes(buscaPacientes.toLowerCase()) ||
+                p.cpf?.includes(buscaPacientes.replace(/\D/g, ''))
+              )
+            : pacientes;
+
+          // Paginação
+          const totalPaginas = Math.ceil(pacientesFiltrados.length / itensPorPagina);
+          const pacientesPaginados = pacientesFiltrados.slice(
+            (paginaAtual - 1) * itensPorPagina,
+            paginaAtual * itensPorPagina
+          );
+
+          return (
+            <Card title="Pacientes Cadastrados">
+              {/* Busca */}
+              <div className="mb-4">
+                <Input
+                  placeholder="Buscar por nome ou CPF..."
+                  value={buscaPacientes}
+                  onChange={(e) => {
+                    setBuscaPacientes(e.target.value);
+                    setPaginaAtual(1);
+                  }}
+                />
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-600">
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Nome</th>
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">CPF</th>
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Telefone</th>
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Prontuário</th>
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Consultas</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              {pacientes.length === 0 && (
-                <p className="text-center text-gray-500 dark:text-gray-400 py-8">Nenhum paciente cadastrado</p>
+                  </thead>
+                  <tbody>
+                    {pacientesPaginados.map(paciente => (
+                      <tr key={paciente.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <td className="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">{paciente.nome}</td>
+                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{formatarCPF(paciente.cpf)}</td>
+                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                          {paciente.telefone ? (
+                            <span className="flex items-center gap-1">
+                              <Phone size={14} />
+                              {paciente.telefone}
+                            </span>
+                          ) : '-'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-sm">
+                            {paciente.prontuarioId}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-sm">
+                            {paciente.historicoConsultas?.length || 0} consulta(s)
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {pacientesFiltrados.length === 0 && (
+                  <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                    {buscaPacientes ? 'Nenhum paciente encontrado' : 'Nenhum paciente cadastrado'}
+                  </p>
+                )}
+              </div>
+
+              {/* Paginação */}
+              {pacientesFiltrados.length > 0 && (
+                <Pagination
+                  currentPage={paginaAtual}
+                  totalPages={totalPaginas}
+                  totalItems={pacientesFiltrados.length}
+                  itemsPerPage={itensPorPagina}
+                  onPageChange={setPaginaAtual}
+                  onItemsPerPageChange={(value) => {
+                    setItensPorPagina(value);
+                    setPaginaAtual(1);
+                  }}
+                />
               )}
-            </div>
-          </Card>
-        )}
+            </Card>
+          );
+        })()}
 
         {/* Aba Agendamento */}
         {abaAtiva === 'agendamento' && (
