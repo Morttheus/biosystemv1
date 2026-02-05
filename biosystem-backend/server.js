@@ -7,6 +7,9 @@ const { apiLimiter, authLimiter, auditLog, sanitizeInput, securityHeaders } = re
 
 const app = express();
 
+// Habilitar trust proxy para funcionar atrás de proxy reverso (Railway, Heroku, etc)
+app.set('trust proxy', 1);
+
 // Middleware de segurança básico
 app.use(securityHeaders);
 
