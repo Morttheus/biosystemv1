@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(node setup-chamadas.js:*)",
+      "Bash(railway:*)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Gabriel Ferreira\\Biosystem\\biosystem-backend\\routes",
+      "C:\\Users\\Gabriel Ferreira\\AppData\\Local\\Temp\\ScreenCapture",
+      "C:\\Users\\Gabriel Ferreira\\Biosystem\\.git"
     ]
   }
 }
