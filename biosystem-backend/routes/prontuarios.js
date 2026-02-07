@@ -34,7 +34,7 @@ router.get('/', autenticado, async (req, res) => {
     // Se não é master, forçar filtro por clínica do usuário
     if (req.usuario.tipo !== 'master') {
       sql += ` AND clinica_id = $${paramIndex}`;
-      params.push(req.usuario.clinica_id);
+      params.push(req.usuario.clinicaId);
       paramIndex++;
     } else if (finalClinicaId) {
       sql += ` AND clinica_id = $${paramIndex}`;
@@ -75,7 +75,7 @@ router.post('/', autenticado, async (req, res) => {
     }
 
     // Verificar permissão: não-master só pode criar na sua clínica
-    if (req.usuario.tipo !== 'master' && parseInt(clinicaId) !== req.usuario.clinica_id) {
+    if (req.usuario.tipo !== 'master' && parseInt(clinicaId) !== req.usuario.clinicaId) {
       return res.status(403).json({ error: 'Permissão negada para criar prontuário em outra clínica' });
     }
 
@@ -105,7 +105,7 @@ router.put('/:id', autenticado, async (req, res) => {
     }
 
     // Verificar permissão: master pode editar qualquer um, outros só da sua clínica
-    if (req.usuario.tipo !== 'master' && checkPront.rows[0].clinica_id !== req.usuario.clinica_id) {
+    if (req.usuario.tipo !== 'master' && checkPront.rows[0].clinica_id !== req.usuario.clinicaId) {
       return res.status(403).json({ error: 'Permissão negada' });
     }
 

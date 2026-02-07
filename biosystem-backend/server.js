@@ -76,6 +76,10 @@ const pacientesRoutes = require('./routes/pacientes');
 const prontuariosRoutes = require('./routes/prontuarios');
 const agendamentosRoutes = require('./routes/agendamentos');
 const clinicasRoutes = require('./routes/clinicas');
+const medicosRoutes = require('./routes/medicos');
+const procedimentosRoutes = require('./routes/procedimentos');
+const filaAtendimentoRoutes = require('./routes/fila-atendimento');
+const chamadasRoutes = require('./routes/chamadas');
 
 // Aplicar rate limiter específico para autenticação
 app.use('/api/auth/login', authLimiter);
@@ -87,6 +91,10 @@ app.use('/api/pacientes', pacientesRoutes);
 app.use('/api/prontuarios', prontuariosRoutes);
 app.use('/api/agendamentos', agendamentosRoutes);
 app.use('/api/clinicas', clinicasRoutes);
+app.use('/api/medicos', medicosRoutes);
+app.use('/api/procedimentos', procedimentosRoutes);
+app.use('/api/fila-atendimento', filaAtendimentoRoutes);
+app.use('/api/chamadas', chamadasRoutes);
 
 // Erro 404
 app.use((req, res) => {
@@ -121,6 +129,10 @@ app.listen(PORT, () => {
   console.log(`  *    /api/prontuarios`);
   console.log(`  *    /api/agendamentos`);
   console.log(`  *    /api/clinicas`);
+  console.log(`  *    /api/medicos`);
+  console.log(`  *    /api/procedimentos`);
+  console.log(`  *    /api/fila-atendimento`);
+  console.log(`  *    /api/chamadas`);
   console.log(`\n`);
 });
 

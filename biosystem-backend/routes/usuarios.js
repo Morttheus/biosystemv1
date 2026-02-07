@@ -15,7 +15,7 @@ router.get('/', autenticado, async (req, res) => {
     // Se não é master, só pode ver usuários da própria clínica
     if (req.usuario.tipo !== 'master') {
       sql += ' AND clinica_id = $1';
-      params = [req.usuario.clinica_id];
+      params = [req.usuario.clinicaId];
     } else if (clinica_id) {
       // Master pode filtrar por clínica específica
       sql += ' AND clinica_id = $1';
@@ -88,7 +88,7 @@ router.put('/:id', autenticado, async (req, res) => {
       if (req.usuario.tipo === 'admin') {
         // Admin só pode editar usuários da sua clínica
         const checkUser = await query('SELECT clinica_id FROM usuarios WHERE id = $1', [userId]);
-        if (checkUser.rows.length === 0 || checkUser.rows[0].clinica_id !== req.usuario.clinica_id) {
+        if (checkUser.rows.length === 0 || checkUser.rows[0].clinica_id !== req.usuario.clinicaId) {
           return res.status(403).json({ error: 'Permissão negada' });
         }
         // Admin não pode alterar tipo para master
