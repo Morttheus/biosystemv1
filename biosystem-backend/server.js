@@ -80,6 +80,7 @@ const medicosRoutes = require('./routes/medicos');
 const procedimentosRoutes = require('./routes/procedimentos');
 const filaAtendimentoRoutes = require('./routes/fila-atendimento');
 const chamadasRoutes = require('./routes/chamadas');
+const setupRoutes = require('./routes/setup');
 
 // Aplicar rate limiter específico para autenticação
 app.use('/api/auth/login', authLimiter);
@@ -95,6 +96,7 @@ app.use('/api/medicos', medicosRoutes);
 app.use('/api/procedimentos', procedimentosRoutes);
 app.use('/api/fila-atendimento', filaAtendimentoRoutes);
 app.use('/api/chamadas', chamadasRoutes);
+app.use('/api/setup', setupRoutes); // REMOVER APÓS CONFIGURAÇÃO INICIAL
 
 // Erro 404
 app.use((req, res) => {
