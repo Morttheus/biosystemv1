@@ -11,22 +11,21 @@ const mapProntuario = (p) => ({
   pacienteId: p.paciente_id,
   medicoId: p.medico_id,
   clinicaId: p.clinica_id,
-  queixaPrincipal: p.queixa_principal,
-  diagnostico: p.diagnostico,
-  prescricao: p.prescricao,
-  observacoes: p.observacoes,
   descricao: p.descricao,
-  dataConsulta: p.data_consulta,
-  atualizadoEm: p.atualizado_em
+  valor: p.valor,
+  procedimentoId: p.procedimento_id,
+  dataConsulta: p.data,
+  data: p.data,
+  ativo: p.ativo
 });
 
 // LISTAR PRONTUÁRIOS
 router.get('/', autenticado, async (req, res) => {
   try {
     const { paciente_id, pacienteId, clinica_id, clinicaId } = req.query;
-    let sql = 'SELECT * FROM prontuarios';
+    let sql = 'SELECT * FROM prontuarios WHERE ativo = true';
     let params = [];
-    let conditions = [];
+    let paramIndex = 1;
 
     // Suporta ambos formatos
     const finalPacienteId = paciente_id || pacienteId;
@@ -34,23 +33,22 @@ router.get('/', autenticado, async (req, res) => {
 
     // Se não é master, forçar filtro por clínica do usuário
     if (req.usuario.tipo !== 'master') {
-      conditions.push(`clinica_id = $${conditions.length + 1}`);
+      sql += ` AND clinica_id = $${paramIndex}`;
       params.push(req.usuario.clinica_id);
+      paramIndex++;
     } else if (finalClinicaId) {
-      conditions.push(`clinica_id = $${conditions.length + 1}`);
+      sql += ` AND clinica_id = $${paramIndex}`;
       params.push(finalClinicaId);
+      paramIndex++;
     }
 
     if (finalPacienteId) {
-      conditions.push(`paciente_id = $${conditions.length + 1}`);
+      sql += ` AND paciente_id = $${paramIndex}`;
       params.push(finalPacienteId);
+      paramIndex++;
     }
 
-    if (conditions.length > 0) {
-      sql += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    const result = await query(sql + ' ORDER BY data_consulta DESC', params);
+    const result = await query(sql + ' ORDER BY data DESC', params);
 
     // Mapear para camelCase
     const prontuarios = result.rows.map(mapProntuario);
@@ -68,7 +66,9 @@ router.post('/', autenticado, async (req, res) => {
     const pacienteId = req.body.paciente_id || req.body.pacienteId;
     const medicoId = req.body.medico_id || req.body.medicoId;
     const clinicaId = req.body.clinica_id || req.body.clinicaId;
-    const { queixa_principal, queixaPrincipal, diagnostico, prescricao, observacoes, descricao } = req.body;
+    const procedimentoId = req.body.procedimento_id || req.body.procedimentoId || null;
+    const valor = req.body.valor || 0;
+    const { descricao } = req.body;
 
     if (!pacienteId || !medicoId || !clinicaId) {
       return res.status(400).json({ error: 'Paciente, médico e clínica são obrigatórios' });
@@ -79,13 +79,11 @@ router.post('/', autenticado, async (req, res) => {
       return res.status(403).json({ error: 'Permissão negada para criar prontuário em outra clínica' });
     }
 
-    const finalQueixaPrincipal = queixa_principal || queixaPrincipal || '';
-
     const result = await query(
-      `INSERT INTO prontuarios (paciente_id, medico_id, clinica_id, queixa_principal, diagnostico, prescricao, observacoes, descricao)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO prontuarios (paciente_id, medico_id, clinica_id, descricao, valor, procedimento_id, ativo, data)
+       VALUES ($1, $2, $3, $4, $5, $6, true, CURRENT_TIMESTAMP)
        RETURNING *`,
-      [pacienteId, medicoId, clinicaId, finalQueixaPrincipal, diagnostico || '', prescricao || '', observacoes || '', descricao || '']
+      [pacienteId, medicoId, clinicaId, descricao || '', valor, procedimentoId]
     );
 
     res.status(201).json({ success: true, prontuario: mapProntuario(result.rows[0]) });
@@ -111,20 +109,15 @@ router.put('/:id', autenticado, async (req, res) => {
       return res.status(403).json({ error: 'Permissão negada' });
     }
 
-    const { queixa_principal, queixaPrincipal, diagnostico, prescricao, observacoes, descricao } = req.body;
-    const finalQueixaPrincipal = queixa_principal || queixaPrincipal;
+    const { descricao, valor } = req.body;
 
     const result = await query(
       `UPDATE prontuarios
-       SET queixa_principal = COALESCE($1, queixa_principal),
-           diagnostico = COALESCE($2, diagnostico),
-           prescricao = COALESCE($3, prescricao),
-           observacoes = COALESCE($4, observacoes),
-           descricao = COALESCE($5, descricao),
-           atualizado_em = CURRENT_TIMESTAMP
-       WHERE id = $6
+       SET descricao = COALESCE($1, descricao),
+           valor = COALESCE($2, valor)
+       WHERE id = $3
        RETURNING *`,
-      [finalQueixaPrincipal, diagnostico, prescricao, observacoes, descricao, prontuarioId]
+      [descricao, valor, prontuarioId]
     );
 
     res.json({ success: true, prontuario: mapProntuario(result.rows[0]) });
@@ -134,7 +127,7 @@ router.put('/:id', autenticado, async (req, res) => {
   }
 });
 
-// DELETAR PRONTUÁRIO
+// DELETAR PRONTUÁRIO (soft delete)
 router.delete('/:id', autenticado, async (req, res) => {
   try {
     const prontuarioId = parseInt(req.params.id);
@@ -144,7 +137,10 @@ router.delete('/:id', autenticado, async (req, res) => {
       return res.status(403).json({ error: 'Apenas usuários Master podem deletar prontuários' });
     }
 
-    const result = await query('DELETE FROM prontuarios WHERE id = $1 RETURNING id', [prontuarioId]);
+    const result = await query(
+      'UPDATE prontuarios SET ativo = false, data_deletado = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id',
+      [prontuarioId]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Prontuário não encontrado' });

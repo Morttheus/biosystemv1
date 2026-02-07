@@ -76,6 +76,7 @@ const pacientesRoutes = require('./routes/pacientes');
 const prontuariosRoutes = require('./routes/prontuarios');
 const agendamentosRoutes = require('./routes/agendamentos');
 const clinicasRoutes = require('./routes/clinicas');
+const setupRoutes = require('./routes/setup');
 
 // Aplicar rate limiter específico para autenticação
 app.use('/api/auth/login', authLimiter);
@@ -87,6 +88,7 @@ app.use('/api/pacientes', pacientesRoutes);
 app.use('/api/prontuarios', prontuariosRoutes);
 app.use('/api/agendamentos', agendamentosRoutes);
 app.use('/api/clinicas', clinicasRoutes);
+app.use('/api/setup', setupRoutes);
 
 // Erro 404
 app.use((req, res) => {

@@ -22,7 +22,7 @@ router.get('/', autenticado, async (req, res) => {
       params = [clinica_id];
     }
 
-    const result = await query(sql + ' ORDER BY criado_em DESC', params);
+    const result = await query(sql + ' ORDER BY data_criacao DESC', params);
 
     // Mapear para camelCase
     const usuarios = result.rows.map(u => ({
@@ -113,8 +113,7 @@ router.put('/:id', autenticado, async (req, res) => {
            tipo = COALESCE($3, tipo),
            clinica_id = COALESCE($4, clinica_id),
            ativo = COALESCE($5, ativo),
-           acesso_relatorios = COALESCE($6, acesso_relatorios),
-           atualizado_em = CURRENT_TIMESTAMP`;
+           acesso_relatorios = COALESCE($6, acesso_relatorios)`;
 
     let params = [nome, email, tipo, finalClinicaId, ativo, finalAcessoRelatorios];
     let paramIndex = 7;
@@ -171,7 +170,7 @@ router.delete('/:id', autenticado, async (req, res) => {
     }
 
     const result = await query(
-      'UPDATE usuarios SET ativo = false, atualizado_em = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id',
+      'UPDATE usuarios SET ativo = false WHERE id = $1 RETURNING id',
       [userId]
     );
 

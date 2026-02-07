@@ -8,8 +8,13 @@ const router = express.Router();
 // LISTAR CLÍNICAS
 router.get('/', autenticado, async (req, res) => {
   try {
-    const result = await query('SELECT * FROM clinicas ORDER BY nome ASC');
-    res.json(result.rows);
+    const result = await query('SELECT * FROM clinicas WHERE ativo = true ORDER BY nome ASC');
+    // Mapear para manter compatibilidade com frontend
+    const clinicas = result.rows.map(c => ({
+      ...c,
+      ativa: c.ativo // alias para compatibilidade
+    }));
+    res.json(clinicas);
   } catch (err) {
     console.error('Erro listar clínicas:', err);
     res.status(500).json({ error: 'Erro no servidor' });
@@ -26,7 +31,8 @@ router.get('/:id', autenticado, async (req, res) => {
       return res.status(404).json({ error: 'Clínica não encontrada' });
     }
 
-    res.json(result.rows[0]);
+    const clinica = { ...result.rows[0], ativa: result.rows[0].ativo };
+    res.json(clinica);
   } catch (err) {
     console.error('Erro obter clínica:', err);
     res.status(500).json({ error: 'Erro no servidor' });
@@ -48,13 +54,14 @@ router.post('/', autenticado, async (req, res) => {
     }
 
     const result = await query(
-      `INSERT INTO clinicas (nome, endereco, telefone, email, cnpj, ativa)
+      `INSERT INTO clinicas (nome, endereco, telefone, email, cnpj, ativo)
        VALUES ($1, $2, $3, $4, $5, true)
        RETURNING *`,
       [nome, endereco || '', telefone || '', email || '', cnpj || '']
     );
 
-    res.status(201).json({ success: true, clinica: result.rows[0] });
+    const clinica = { ...result.rows[0], ativa: result.rows[0].ativo };
+    res.status(201).json({ success: true, clinica });
   } catch (err) {
     console.error('Erro criar clínica:', err);
     res.status(500).json({ error: 'Erro no servidor' });
@@ -70,7 +77,10 @@ router.put('/:id', autenticado, async (req, res) => {
     }
 
     const { id } = req.params;
-    const { nome, endereco, telefone, email, cnpj, ativa } = req.body;
+    const { nome, endereco, telefone, email, cnpj, ativa, ativo } = req.body;
+
+    // Suporta ambos: ativa e ativo
+    const valorAtivo = ativo !== undefined ? ativo : ativa;
 
     const result = await query(
       `UPDATE clinicas
@@ -79,18 +89,18 @@ router.put('/:id', autenticado, async (req, res) => {
            telefone = COALESCE($3, telefone),
            email = COALESCE($4, email),
            cnpj = COALESCE($5, cnpj),
-           ativa = COALESCE($6, ativa),
-           atualizado_em = CURRENT_TIMESTAMP
+           ativo = COALESCE($6, ativo)
        WHERE id = $7
        RETURNING *`,
-      [nome, endereco, telefone, email, cnpj, ativa, id]
+      [nome, endereco, telefone, email, cnpj, valorAtivo, id]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Clínica não encontrada' });
     }
 
-    res.json({ success: true, clinica: result.rows[0] });
+    const clinica = { ...result.rows[0], ativa: result.rows[0].ativo };
+    res.json({ success: true, clinica });
   } catch (err) {
     console.error('Erro atualizar clínica:', err);
     res.status(500).json({ error: 'Erro no servidor' });
@@ -108,7 +118,7 @@ router.delete('/:id', autenticado, async (req, res) => {
     const { id } = req.params;
 
     const result = await query(
-      'UPDATE clinicas SET ativa = false, atualizado_em = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
+      'UPDATE clinicas SET ativo = false WHERE id = $1 RETURNING *',
       [id]
     );
 
