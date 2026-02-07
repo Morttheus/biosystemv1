@@ -17,11 +17,8 @@ export const useData = () => {
 export const DataProvider = ({ children }) => {
   const { usuarioLogado, isMaster } = useAuth();
 
-  // Clínicas
-  const [clinicas, setClinicas] = useState([
-    { id: 1, nome: 'BioSystem Oftalmologia Centro', endereco: 'Rua Principal, 100', telefone: '(11) 3333-3333', ativa: true },
-    { id: 2, nome: 'BioSystem Oftalmologia Sul', endereco: 'Av. Sul, 500', telefone: '(11) 4444-4444', ativa: true },
-  ]);
+  // Clínicas (carregadas da API)
+  const [clinicas, setClinicas] = useState([]);
 
   // Carregar clínicas da API
   const carregarClinicas = async () => {
@@ -33,12 +30,8 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // Médicos
-  const [medicos, setMedicos] = useState([
-    { id: 1, nome: 'Carlos Silva', crm: '12345-SP', especialidade: 'Oftalmologia Geral', clinicaId: 1, ativo: true },
-    { id: 2, nome: 'Maria Santos', crm: '54321-SP', especialidade: 'Retina e Vítreo', clinicaId: 1, ativo: true },
-    { id: 3, nome: 'João Oliveira', crm: '11111-SP', especialidade: 'Glaucoma', clinicaId: 2, ativo: true },
-  ]);
+  // Médicos (carregados da API)
+  const [medicos, setMedicos] = useState([]);
 
   // Carregar médicos da API
   const carregarMedicos = async () => {
@@ -54,27 +47,18 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // Procedimentos (globais - todas as clínicas usam os mesmos)
-  const [procedimentos, setProcedimentos] = useState([
-    { id: 1, nome: 'Consulta Oftalmológica', valor: 250.00, duracao: 30, ativo: true },
-    { id: 2, nome: 'Exame de Fundo de Olho', valor: 150.00, duracao: 20, ativo: true },
-    { id: 3, nome: 'Tonometria', valor: 80.00, duracao: 15, ativo: true },
-    { id: 4, nome: 'Campimetria', valor: 200.00, duracao: 45, ativo: true },
-    { id: 5, nome: 'Mapeamento de Retina', valor: 180.00, duracao: 30, ativo: true },
-    { id: 6, nome: 'Topografia Corneana', valor: 220.00, duracao: 25, ativo: true },
-    { id: 7, nome: 'OCT - Tomografia de Coerência Óptica', valor: 350.00, duracao: 20, ativo: true },
-  ]);
+  // Procedimentos (carregados da API)
+  const [procedimentos, setProcedimentos] = useState([]);
 
   // Carregar procedimentos da API
   const carregarProcedimentos = async () => {
     try {
       const lista = await apiService.listarProcedimentos();
-      if (lista && Array.isArray(lista) && lista.length > 0) {
+      if (lista && Array.isArray(lista)) {
         setProcedimentos(lista);
       }
-      // Se lista vazia, mantém procedimentos padrão do sistema
-    } catch {
-      // Mantém os procedimentos padrão se a API falhar (sem mostrar toast)
+    } catch (err) {
+      console.error('Erro ao carregar procedimentos:', err);
     }
   };
 
@@ -169,12 +153,35 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  const editarClinica = (id, dados) => {
-    setClinicas(prev => prev.map(c => c.id === id ? { ...c, ...dados } : c));
+  const editarClinica = async (id, dados) => {
+    try {
+      const resultado = await apiService.atualizarClinica(id, dados);
+
+      if (resultado.clinica) {
+        setClinicas(prev => prev.map(c => c.id === id ? resultado.clinica : c));
+        toast.success('Clínica atualizada com sucesso!');
+        return { success: true, clinica: resultado.clinica };
+      }
+
+      throw new Error(resultado.error || 'Erro ao atualizar clínica');
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao atualizar clínica';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
   };
 
-  const excluirClinica = (id) => {
-    setClinicas(prev => prev.map(c => c.id === id ? { ...c, ativa: false } : c));
+  const excluirClinica = async (id) => {
+    try {
+      await apiService.deletarClinica(id);
+      setClinicas(prev => prev.map(c => c.id === id ? { ...c, ativa: false } : c));
+      toast.success('Clínica excluída com sucesso!');
+      return { success: true };
+    } catch (err) {
+      const mensagem = err.message || 'Erro ao excluir clínica';
+      toast.error(mensagem);
+      return { success: false, error: mensagem };
+    }
   };
 
   // ============ FUNÇÕES DE MÉDICOS ============
