@@ -39,7 +39,8 @@ router.post('/login', async (req, res) => {
 // REGISTRAR NOVO USUÁRIO
 router.post('/registrar', autenticado, async (req, res) => {
   try {
-    const { nome, email, senha, tipo, clinica_id } = req.body;
+    const { nome, email, senha, tipo, clinica_id, clinicaId } = req.body;
+    const finalClinicaId = clinica_id || clinicaId;
 
     if (!nome || !email || !senha || !tipo) {
       return res.status(400).json({ error: 'Campos obrigatórios: nome, email, senha, tipo' });
@@ -56,9 +57,9 @@ router.post('/registrar', autenticado, async (req, res) => {
 
     // Inserir usuário
     const result = await query(
-      `INSERT INTO usuarios (nome, email, senha, tipo, clinica_id, ativo) 
+      `INSERT INTO usuarios (nome, email, senha, tipo, clinica_id, ativo)
        VALUES ($1, $2, $3, $4, $5, true) RETURNING id, nome, email, tipo, clinica_id`,
-      [nome, email, senhaHash, tipo, clinica_id]
+      [nome, email, senhaHash, tipo, finalClinicaId]
     );
 
     const novoUsuario = result.rows[0];
@@ -69,9 +70,19 @@ router.post('/registrar', autenticado, async (req, res) => {
   }
 });
 
-// VERIFICAR TOKEN
-router.get('/me', autenticado, (req, res) => {
-  res.json({ usuario: req.usuario });
+// VERIFICAR TOKEN - retorna dados completos do usuário do banco
+router.get('/me', autenticado, async (req, res) => {
+  try {
+    const result = await query('SELECT * FROM usuarios WHERE id = $1 AND ativo = true', [req.usuario.id]);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Usuário não encontrado' });
+    }
+    const { senha: _, ...usuarioSemSenha } = result.rows[0];
+    res.json({ usuario: usuarioSemSenha });
+  } catch (err) {
+    console.error('Erro verificar token:', err);
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
 });
 
 module.exports = router;

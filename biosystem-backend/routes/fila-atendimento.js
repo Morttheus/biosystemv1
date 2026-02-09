@@ -131,7 +131,7 @@ router.post('/', autenticado, async (req, res) => {
 router.put('/:id', autenticado, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, medicoId, medico_id, medicoNome, medico_nome } = req.body;
+    const { status, medicoId, medico_id, medicoNome, medico_nome, valor, procedimentoId, procedimento_id } = req.body;
 
     let updateFields = ['status = COALESCE($1, status)'];
     let params = [status];
@@ -150,6 +150,21 @@ router.put('/:id', autenticado, async (req, res) => {
         params.push(finalMedicoNome);
         paramIndex++;
       }
+    }
+
+    // Atualizar valor se fornecido
+    if (valor !== undefined && valor !== null) {
+      updateFields.push(`valor = $${paramIndex}`);
+      params.push(parseFloat(valor) || 0);
+      paramIndex++;
+    }
+
+    // Atualizar procedimento se fornecido
+    const finalProcedimentoId = procedimentoId || procedimento_id;
+    if (finalProcedimentoId) {
+      updateFields.push(`procedimento_id = $${paramIndex}`);
+      params.push(finalProcedimentoId);
+      paramIndex++;
     }
 
     if (status === 'em_atendimento' || status === 'atendendo') {
