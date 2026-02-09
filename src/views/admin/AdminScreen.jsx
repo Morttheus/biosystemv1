@@ -50,14 +50,17 @@ const AdminScreen = () => {
     especialidade: ''
   });
 
-  // Obtém a clínica do admin
-  const minhaClinica = clinicas.find(c => c.id === usuarioLogado?.clinicaId);
+  // Obtém a clínica do admin (suporta ambos formatos)
+  const adminClinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
+  // eslint-disable-next-line eqeqeq
+  const minhaClinica = clinicas.find(c => c.id == adminClinicaId);
 
   // Obtém usuários da clínica do admin
-  const usuariosDaClinica = obterUsuarios(usuarioLogado?.clinicaId);
+  const usuariosDaClinica = obterUsuarios(adminClinicaId);
 
-  // Obtém médicos da clínica do admin
-  const medicosDaClinica = medicos.filter(m => m.clinicaId === usuarioLogado?.clinicaId);
+  // Obtém médicos da clínica do admin (suporta ambos formatos)
+  // eslint-disable-next-line eqeqeq
+  const medicosDaClinica = medicos.filter(m => (m.clinicaId || m.clinica_id) == adminClinicaId);
 
   const abas = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -87,7 +90,7 @@ const AdminScreen = () => {
 
     const dados = {
       ...formUsuario,
-      clinicaId: usuarioLogado.clinicaId // Sempre vincula à clínica do admin
+      clinicaId: adminClinicaId // Sempre vincula à clínica do admin
     };
 
     try {
@@ -156,7 +159,7 @@ const AdminScreen = () => {
       if (itemEditando) {
         const resultado = await editarMedico(itemEditando.id, {
           ...formMedico,
-          clinicaId: usuarioLogado.clinicaId
+          clinicaId: adminClinicaId
         });
         if (!resultado.success) {
           setErro(resultado.error);
@@ -165,7 +168,7 @@ const AdminScreen = () => {
       } else {
         const resultado = await adicionarMedico({
           ...formMedico,
-          clinicaId: usuarioLogado.clinicaId
+          clinicaId: adminClinicaId
         });
         if (!resultado.success) {
           setErro(resultado.error);

@@ -1,5 +1,5 @@
 // src/context/DataContext.jsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import apiService from '../services/api';
 import { toast } from 'react-toastify';
@@ -109,18 +109,20 @@ export const DataProvider = ({ children }) => {
   // Fila de atendimento
   const [filaAtendimento, setFilaAtendimento] = useState([]);
 
-  // Carregar fila de atendimento
-  const carregarFila = async () => {
+  // Carregar fila de atendimento (useCallback para polling estável)
+  const carregarFila = useCallback(async () => {
     try {
       // Master carrega toda a fila, outros usuários só da sua clínica
       const ehUsuarioMaster = usuarioLogado?.tipo === 'master';
       const clinicaId = ehUsuarioMaster ? null : (usuarioLogado?.clinicaId || usuarioLogado?.clinica_id);
       const lista = await apiService.listarFila(clinicaId);
-      setFilaAtendimento(lista);
+      if (Array.isArray(lista)) {
+        setFilaAtendimento(lista);
+      }
     } catch (err) {
       console.error('Erro ao carregar fila:', err);
     }
-  };
+  }, [usuarioLogado]);
 
   // Chamadas de pacientes (para painel de sala de espera)
   const [chamadas, setChamadas] = useState([]);
@@ -432,7 +434,11 @@ export const DataProvider = ({ children }) => {
   };
 
   const obterAtendimentoAtual = (medicoId) => {
-    return filaAtendimento.find(a => a.medico_id === medicoId && a.status === 'atendendo');
+    return filaAtendimento.find(a => {
+      const atendMedicoId = a.medicoId || a.medico_id;
+      // eslint-disable-next-line eqeqeq
+      return atendMedicoId == medicoId && a.status === 'atendendo';
+    });
   };
 
   const finalizarAtendimento = async (atendimentoId, dadosConsulta) => {
@@ -788,10 +794,11 @@ export const DataProvider = ({ children }) => {
   const clinicaIdUsuario = getClinicaIdUsuario();
   const ehMaster = isMaster();
 
-  // Helper para comparar clinicaId (suporta ambos formatos)
+  // Helper para comparar clinicaId (suporta ambos formatos e tipos)
   const matchClinica = (item) => {
     const itemClinicaId = item.clinicaId || item.clinica_id;
-    return itemClinicaId === clinicaIdUsuario;
+    // eslint-disable-next-line eqeqeq
+    return itemClinicaId == clinicaIdUsuario;
   };
 
   // Médicos filtrados por clínica

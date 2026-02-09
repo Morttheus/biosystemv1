@@ -98,18 +98,28 @@ const ConsultorioScreen = () => {
   const medicoId = usuarioLogado?.medicoId || usuarioLogado?.medico_id;
   const clinicaId = getClinicaIdUsuario();
 
-  // Helper para comparar medicoId (suporta ambos formatos)
+  // Helper para comparar medicoId (suporta ambos formatos e tipos)
   // Se médico não tem medicoId vinculado, mostra todos da clínica
+  // Pacientes sem médico atribuído também aparecem para todos os médicos da clínica
   const matchMedico = (a) => {
     const atendMedicoId = a.medicoId || a.medico_id;
     const atendClinicaId = a.clinicaId || a.clinica_id;
 
-    // Se não tem medicoId, mostra todos da clínica
+    // Se o usuário logado não tem medicoId, mostra todos da clínica
     if (!medicoId) {
-      return atendClinicaId === clinicaId;
+      // eslint-disable-next-line eqeqeq
+      return atendClinicaId == clinicaId;
     }
 
-    return atendMedicoId === medicoId;
+    // Se o paciente na fila não tem médico atribuído, mostra para todos os médicos da clínica
+    if (!atendMedicoId) {
+      // eslint-disable-next-line eqeqeq
+      return atendClinicaId == clinicaId;
+    }
+
+    // Se tem médico atribuído, mostra apenas para o médico correto
+    // eslint-disable-next-line eqeqeq
+    return atendMedicoId == medicoId;
   };
 
   // Fila do médico (suporta ambos formatos de campo)
@@ -122,9 +132,11 @@ const ConsultorioScreen = () => {
 
   // Pacientes atendidos no dia (suporta ambos formatos)
   const atendidos = filaAtendimento.filter(a => {
-    const horarioFinal = a.horarioFinalizacao || a.horario_finalizacao;
-    return matchMedico(a) && a.status === 'atendido' &&
-      horarioFinal && new Date(horarioFinal).toDateString() === new Date().toDateString();
+    if (!matchMedico(a) || a.status !== 'atendido') return false;
+    // Usa horário de atendimento ou chegada para filtrar por data
+    const horario = a.horarioFinalizacao || a.horario_finalizacao || a.horarioAtendimento || a.horario_atendimento || a.horarioChegada || a.horario_chegada;
+    if (!horario) return true; // Se não tem horário, mostra mesmo assim (foi atendido hoje)
+    return new Date(horario).toDateString() === new Date().toDateString();
   });
 
   // Atendimento em andamento (status 'atendendo' no backend)
