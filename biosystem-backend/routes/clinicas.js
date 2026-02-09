@@ -47,17 +47,17 @@ router.post('/', autenticado, async (req, res) => {
       return res.status(403).json({ error: 'Apenas usuários Master podem criar clínicas' });
     }
 
-    const { nome, endereco, telefone, email, cnpj } = req.body;
+    const { nome, endereco, telefone } = req.body;
 
     if (!nome) {
       return res.status(400).json({ error: 'Nome da clínica é obrigatório' });
     }
 
     const result = await query(
-      `INSERT INTO clinicas (nome, endereco, telefone, email, cnpj, ativo)
-       VALUES ($1, $2, $3, $4, $5, true)
+      `INSERT INTO clinicas (nome, endereco, telefone, ativo)
+       VALUES ($1, $2, $3, true)
        RETURNING *`,
-      [nome, endereco || '', telefone || '', email || '', cnpj || '']
+      [nome, endereco || '', telefone || '']
     );
 
     const clinica = { ...result.rows[0], ativa: result.rows[0].ativo };
@@ -77,7 +77,7 @@ router.put('/:id', autenticado, async (req, res) => {
     }
 
     const { id } = req.params;
-    const { nome, endereco, telefone, email, cnpj, ativa, ativo } = req.body;
+    const { nome, endereco, telefone, ativa, ativo } = req.body;
 
     // Suporta ambos: ativa e ativo
     const valorAtivo = ativo !== undefined ? ativo : ativa;
@@ -87,12 +87,10 @@ router.put('/:id', autenticado, async (req, res) => {
        SET nome = COALESCE($1, nome),
            endereco = COALESCE($2, endereco),
            telefone = COALESCE($3, telefone),
-           email = COALESCE($4, email),
-           cnpj = COALESCE($5, cnpj),
-           ativo = COALESCE($6, ativo)
-       WHERE id = $7
+           ativo = COALESCE($4, ativo)
+       WHERE id = $5
        RETURNING *`,
-      [nome, endereco, telefone, email, cnpj, valorAtivo, id]
+      [nome, endereco, telefone, valorAtivo, id]
     );
 
     if (result.rows.length === 0) {
