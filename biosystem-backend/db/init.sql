@@ -57,13 +57,24 @@ CREATE TABLE IF NOT EXISTS procedimentos (
   data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabela de Procedimento-Clínicas (many-to-many)
+CREATE TABLE IF NOT EXISTS procedimento_clinicas (
+  id SERIAL PRIMARY KEY,
+  procedimento_id INTEGER NOT NULL REFERENCES procedimentos(id) ON DELETE CASCADE,
+  clinica_id INTEGER NOT NULL REFERENCES clinicas(id) ON DELETE CASCADE,
+  UNIQUE(procedimento_id, clinica_id)
+);
+
 -- Tabela de Prontuários
 CREATE TABLE IF NOT EXISTS prontuarios (
   id SERIAL PRIMARY KEY,
   paciente_id INTEGER NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
   medico_id INTEGER REFERENCES medicos(id),
   clinica_id INTEGER NOT NULL REFERENCES clinicas(id),
-  conteudo TEXT,
+  descricao TEXT,
+  valor DECIMAL(10,2) DEFAULT 0,
+  procedimento_id INTEGER REFERENCES procedimentos(id),
+  ativo BOOLEAN DEFAULT true,
   data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -86,9 +97,11 @@ CREATE TABLE IF NOT EXISTS agendamentos (
 CREATE TABLE IF NOT EXISTS fila_atendimento (
   id SERIAL PRIMARY KEY,
   paciente_id INTEGER NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
-  medico_id INTEGER NOT NULL REFERENCES medicos(id),
+  medico_id INTEGER REFERENCES medicos(id),
   clinica_id INTEGER NOT NULL REFERENCES clinicas(id),
-  status VARCHAR(50) DEFAULT 'aguardando' CHECK (status IN ('aguardando', 'em_atendimento', 'atendido', 'cancelado')),
+  procedimento_id INTEGER REFERENCES procedimentos(id),
+  valor DECIMAL(10,2) DEFAULT 0,
+  status VARCHAR(50) DEFAULT 'aguardando',
   horario_chegada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   horario_atendimento TIMESTAMP,
   horario_finalizacao TIMESTAMP
