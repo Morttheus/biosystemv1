@@ -426,7 +426,7 @@ const RecepcaoScreen = () => {
                   label="Médico"
                   value={form.medicoId}
                   onChange={(e) => setForm({ ...form, medicoId: e.target.value })}
-                  options={medicosClinica.map(m => ({ value: m.id.toString(), label: `Dr(a). ${m.nome}` }))}
+                  options={medicosClinica.map(m => ({ value: m.id.toString(), label: m.nome }))}
                   required
                 />
                 <Select
@@ -486,7 +486,7 @@ const RecepcaoScreen = () => {
                     <div>
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100">{pacienteNome}</h4>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {medicoNome ? `Dr(a). ${medicoNome}` : 'Médico não atribuído'}
+                        {medicoNome ? medicoNome : 'Médico não atribuído'}
                       </p>
                     </div>
                   </div>

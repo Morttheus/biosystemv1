@@ -384,7 +384,7 @@ const AdminScreen = () => {
                 <tbody>
                   {medicosDaClinica.map(medico => (
                     <tr key={medico.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium">Dr(a). {medico.nome}</td>
+                      <td className="py-3 px-4 font-medium">{medico.nome}</td>
                       <td className="py-3 px-4 text-gray-600">{medico.crm}</td>
                       <td className="py-3 px-4 text-gray-600">{medico.especialidade}</td>
                       <td className="py-3 px-4 text-right">

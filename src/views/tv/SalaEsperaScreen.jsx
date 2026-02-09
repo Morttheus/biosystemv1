@@ -179,7 +179,7 @@ const SalaEsperaScreen = () => {
                     <div>
                       <p className="text-cyan-100 text-sm">Consultório com</p>
                       <p className="text-white text-2xl font-bold">
-                        Dr(a). {chamadaAtualFiltrada.medicoNome}
+                        {chamadaAtualFiltrada.medicoNome}
                       </p>
                     </div>
                   </div>
@@ -254,7 +254,7 @@ const SalaEsperaScreen = () => {
                   {chamada.pacienteNome}
                 </p>
                 <p className="text-gray-300 text-sm">
-                  Dr(a). {chamada.medicoNome}
+                  {chamada.medicoNome}
                 </p>
                 <p className="text-gray-400 text-xs mt-1">
                   {new Date(chamada.dataHora).toLocaleTimeString('pt-BR')}

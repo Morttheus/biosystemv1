@@ -255,7 +255,7 @@ const ProntuarioScreen = () => {
                                     {consulta.procedimento}
                                   </p>
                                   <p className="text-sm text-gray-500">
-                                    Dr(a). {consulta.medicoNome} - {formatarDataHora(consulta.data)}
+                                    {consulta.medicoNome} - {formatarDataHora(consulta.data)}
                                   </p>
                                 </div>
                               </div>

@@ -387,7 +387,7 @@ const AgendamentoScreen = () => {
                               }`}
                             >
                               <p className="font-medium truncate">{agend.pacienteNome}</p>
-                              <p className="truncate opacity-75">Dr(a). {agend.medicoNome}</p>
+                              <p className="truncate opacity-75">{agend.medicoNome}</p>
                             </div>
                           ))}
                         </div>
@@ -425,7 +425,7 @@ const AgendamentoScreen = () => {
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900 dark:text-gray-100">{agend.pacienteNome}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Dr(a). {agend.medicoNome}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{agend.medicoNome}</p>
                         <p className="text-xs text-gray-400 dark:text-gray-500">{agend.procedimentoNome}</p>
                       </div>
                     </div>
@@ -594,7 +594,7 @@ const AgendamentoScreen = () => {
                 label="Médico *"
                 value={form.medicoId}
                 onChange={(e) => setForm({ ...form, medicoId: e.target.value })}
-                options={medicosClinica.map(m => ({ value: m.id.toString(), label: `Dr(a). ${m.nome}` }))}
+                options={medicosClinica.map(m => ({ value: m.id.toString(), label: m.nome }))}
               />
 
               <Select

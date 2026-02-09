@@ -226,7 +226,7 @@ const DashboardScreen = () => {
                 </span>
                 <div className="flex-1">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-gray-700 dark:text-gray-300">Dr(a). {medico.nome}</span>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{medico.nome}</span>
                     <span className="text-sm font-bold text-gray-600 dark:text-gray-400">{medico.count} atend.</span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
@@ -272,7 +272,7 @@ const DashboardScreen = () => {
                   <tr key={atend.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <td className="py-3 px-4 font-medium text-gray-500 dark:text-gray-400">{index + 1}</td>
                     <td className="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">{pacienteNome}</td>
-                    <td className="py-3 px-4 text-gray-600 dark:text-gray-400">Dr(a). {medicoNome}</td>
+                    <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{medicoNome}</td>
                     <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
                       {horarioChegada ? new Date(horarioChegada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-'}
                     </td>

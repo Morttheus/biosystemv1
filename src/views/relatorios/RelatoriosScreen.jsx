@@ -320,7 +320,7 @@ const RelatoriosScreen = () => {
                 onChange={(e) => setMedicoFiltro(e.target.value)}
                 options={[
                   { value: '', label: 'Todos' },
-                  ...medicosClinica.map(m => ({ value: m.id.toString(), label: `Dr(a). ${m.nome}` }))
+                  ...medicosClinica.map(m => ({ value: m.id.toString(), label: m.nome }))
                 ]}
               />
               <Select

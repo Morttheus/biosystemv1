@@ -289,7 +289,7 @@ const ConsultorioScreen = () => {
                 Consultório Médico
               </h1>
               <p className="text-teal-100 text-sm">
-                Dr(a). {usuarioLogado?.nome}
+                {usuarioLogado?.nome}
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -814,7 +814,7 @@ const ConsultorioScreen = () => {
                               ` : ''}
                               <div class="medico">
                                 <div class="assinatura">
-                                  <p class="nome">Dr(a). ${usuarioLogado?.nome}</p>
+                                  <p class="nome">${usuarioLogado?.nome}</p>
                                   <p class="crm">CRM: ${medicoInfo?.crm || usuarioLogado?.crm || '-'}</p>
                                 </div>
                               </div>
@@ -904,7 +904,7 @@ Exemplo:
                         <div className="mt-8 pt-4 border-t border-gray-300 text-center">
                           <div className="inline-block border-t-2 border-gray-400 pt-2 px-8">
                             <p className="font-semibold text-gray-800">
-                              Dr(a). {usuarioLogado?.nome}
+                              {usuarioLogado?.nome}
                             </p>
                             <p className="text-sm text-gray-600">
                               CRM: {medicos.find(m => m.id === medicoId)?.crm || usuarioLogado?.crm || '-'}
@@ -985,7 +985,7 @@ Exemplo:
                                 ${consulta.observacoes ? `<div class="observacoes"><strong>Observações:</strong> ${consulta.observacoes}</div>` : ''}
                                 <div class="medico">
                                   <div class="assinatura">
-                                    <p class="nome">Dr(a). ${usuarioLogado?.nome}</p>
+                                    <p class="nome">${usuarioLogado?.nome}</p>
                                     <p class="crm">CRM: ${medicoInfo?.crm || usuarioLogado?.crm || '-'}</p>
                                   </div>
                                 </div>
@@ -1028,7 +1028,7 @@ Exemplo:
                                   {formatarData(registro.data)}
                                 </span>
                                 <span className="ml-2 text-gray-600">
-                                  Dr(a). {registro.medicoNome}
+                                  {registro.medicoNome}
                                 </span>
                               </div>
                               <span className="text-sm text-gray-500">

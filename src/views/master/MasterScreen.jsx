@@ -769,7 +769,7 @@ const MasterScreen = () => {
                 <tbody>
                   {medicos.map(medico => (
                     <tr key={medico.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium">Dr(a). {medico.nome}</td>
+                      <td className="py-3 px-4 font-medium">{medico.nome}</td>
                       <td className="py-3 px-4 text-gray-600">{medico.crm}</td>
                       <td className="py-3 px-4 text-gray-600">{medico.especialidade}</td>
                       <td className="py-3 px-4 text-gray-600">
@@ -920,7 +920,7 @@ const MasterScreen = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-500">Médico:</span>
-                      <span className="ml-2 font-medium">Dr(a). {pront.medicoNome}</span>
+                      <span className="ml-2 font-medium">{pront.medicoNome}</span>
                     </div>
                     <div>
                       <span className="text-gray-500">Procedimento:</span>
@@ -1157,7 +1157,7 @@ const MasterScreen = () => {
                         <tbody>
                           {relatorioGerado.porMedico.map((item, idx) => (
                             <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
-                              <td className="py-3 px-4 font-medium">Dr(a). {item.medico}</td>
+                              <td className="py-3 px-4 font-medium">{item.medico}</td>
                               <td className="py-3 px-4 text-gray-600">{item.clinica}</td>
                               <td className="py-3 px-4 text-center">
                                 <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
