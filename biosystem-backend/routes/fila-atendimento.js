@@ -10,11 +10,9 @@ router.get('/', autenticado, async (req, res) => {
   try {
     const { clinica_id, status } = req.query;
     let sql = `
-      SELECT f.*, p.nome as paciente_nome, p.cpf as paciente_cpf,
-             m.nome as medico_nome, pr.nome as procedimento_nome
+      SELECT f.*, p.cpf as paciente_cpf, pr.nome as procedimento_nome
       FROM fila_atendimento f
       LEFT JOIN pacientes p ON f.paciente_id = p.id
-      LEFT JOIN medicos m ON f.medico_id = m.id
       LEFT JOIN procedimentos pr ON f.procedimento_id = pr.id
       WHERE 1=1
     `;
@@ -50,8 +48,7 @@ router.get('/', autenticado, async (req, res) => {
       valor: parseFloat(f.valor) || 0,
       status: f.status,
       horarioChegada: f.horario_chegada,
-      horarioAtendimento: f.horario_atendimento,
-      horarioFinalizacao: f.horario_finalizacao
+      horarioAtendimento: f.horario_atendimento
     }));
 
     res.json(fila);
@@ -64,7 +61,9 @@ router.get('/', autenticado, async (req, res) => {
 // ADICIONAR À FILA
 router.post('/', autenticado, async (req, res) => {
   try {
-    const { paciente_id, pacienteId, medico_id, medicoId, clinica_id, clinicaId,
+    const { paciente_id, pacienteId, pacienteNome, paciente_nome,
+            medico_id, medicoId, medicoNome, medico_nome,
+            clinica_id, clinicaId,
             procedimento_id, procedimentoId, valor } = req.body;
 
     const finalPacienteId = paciente_id || pacienteId;
@@ -77,48 +76,41 @@ router.post('/', autenticado, async (req, res) => {
       return res.status(400).json({ error: 'Paciente e clínica são obrigatórios' });
     }
 
+    // Buscar nome do paciente se não foi enviado
+    let finalPacienteNome = pacienteNome || paciente_nome || '';
+    if (!finalPacienteNome && finalPacienteId) {
+      try {
+        const pacResult = await query('SELECT nome FROM pacientes WHERE id = $1', [finalPacienteId]);
+        finalPacienteNome = pacResult.rows[0]?.nome || 'Paciente';
+      } catch (e) { finalPacienteNome = 'Paciente'; }
+    }
+
+    // Buscar nome do médico se não foi enviado
+    let finalMedicoNome = medicoNome || medico_nome || '';
+    if (!finalMedicoNome && finalMedicoId) {
+      try {
+        const medResult = await query('SELECT nome FROM medicos WHERE id = $1', [finalMedicoId]);
+        finalMedicoNome = medResult.rows[0]?.nome || '';
+      } catch (e) { /* ignorar */ }
+    }
+
     const result = await query(
-      `INSERT INTO fila_atendimento (paciente_id, medico_id, clinica_id, procedimento_id, valor, status, horario_chegada)
-       VALUES ($1, $2, $3, $4, $5, 'aguardando', NOW())
+      `INSERT INTO fila_atendimento (paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, procedimento_id, valor, status, horario_chegada)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'aguardando', NOW())
        RETURNING *`,
-      [finalPacienteId, finalMedicoId, finalClinicaId, finalProcedimentoId, finalValor]
+      [finalPacienteId, finalPacienteNome, finalMedicoId, finalMedicoNome, finalClinicaId, finalProcedimentoId, finalValor]
     );
 
     const f = result.rows[0];
 
-    // Buscar nomes para resposta
-    let pacienteNome = '';
-    let medicoNome = '';
-    let procedimentoNome = '';
-
-    try {
-      const pacResult = await query('SELECT nome FROM pacientes WHERE id = $1', [f.paciente_id]);
-      pacienteNome = pacResult.rows[0]?.nome || '';
-    } catch (e) { /* ignorar */ }
-
-    if (f.medico_id) {
-      try {
-        const medResult = await query('SELECT nome FROM medicos WHERE id = $1', [f.medico_id]);
-        medicoNome = medResult.rows[0]?.nome || '';
-      } catch (e) { /* ignorar */ }
-    }
-
-    if (f.procedimento_id) {
-      try {
-        const procResult = await query('SELECT nome FROM procedimentos WHERE id = $1', [f.procedimento_id]);
-        procedimentoNome = procResult.rows[0]?.nome || '';
-      } catch (e) { /* ignorar */ }
-    }
-
     const filaItem = {
       id: f.id,
       pacienteId: f.paciente_id,
-      pacienteNome,
+      pacienteNome: f.paciente_nome,
       medicoId: f.medico_id,
-      medicoNome,
+      medicoNome: f.medico_nome,
       clinicaId: f.clinica_id,
       procedimentoId: f.procedimento_id,
-      procedimentoNome,
       valor: parseFloat(f.valor) || 0,
       status: f.status,
       horarioChegada: f.horario_chegada
@@ -139,7 +131,7 @@ router.post('/', autenticado, async (req, res) => {
 router.put('/:id', autenticado, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, medicoId, medico_id } = req.body;
+    const { status, medicoId, medico_id, medicoNome, medico_nome } = req.body;
 
     let updateFields = ['status = COALESCE($1, status)'];
     let params = [status];
@@ -150,14 +142,18 @@ router.put('/:id', autenticado, async (req, res) => {
       updateFields.push(`medico_id = $${paramIndex}`);
       params.push(finalMedicoId);
       paramIndex++;
+
+      // Atualizar nome do médico também
+      const finalMedicoNome = medicoNome || medico_nome;
+      if (finalMedicoNome) {
+        updateFields.push(`medico_nome = $${paramIndex}`);
+        params.push(finalMedicoNome);
+        paramIndex++;
+      }
     }
 
     if (status === 'em_atendimento' || status === 'atendendo') {
       updateFields.push(`horario_atendimento = NOW()`);
-    }
-
-    if (status === 'atendido' || status === 'finalizado') {
-      updateFields.push(`horario_finalizacao = NOW()`);
     }
 
     const sql = `UPDATE fila_atendimento
@@ -174,32 +170,18 @@ router.put('/:id', autenticado, async (req, res) => {
 
     const f = result.rows[0];
 
-    let pacienteNome = '';
-    let medicoNome = '';
-    try {
-      const pacResult = await query('SELECT nome FROM pacientes WHERE id = $1', [f.paciente_id]);
-      pacienteNome = pacResult.rows[0]?.nome || '';
-    } catch (e) { /* ignorar */ }
-    if (f.medico_id) {
-      try {
-        const medResult = await query('SELECT nome FROM medicos WHERE id = $1', [f.medico_id]);
-        medicoNome = medResult.rows[0]?.nome || '';
-      } catch (e) { /* ignorar */ }
-    }
-
     const filaItem = {
       id: f.id,
       pacienteId: f.paciente_id,
-      pacienteNome,
+      pacienteNome: f.paciente_nome,
       medicoId: f.medico_id,
-      medicoNome,
+      medicoNome: f.medico_nome,
       clinicaId: f.clinica_id,
       procedimentoId: f.procedimento_id,
       valor: parseFloat(f.valor) || 0,
       status: f.status,
       horarioChegada: f.horario_chegada,
-      horarioAtendimento: f.horario_atendimento,
-      horarioFinalizacao: f.horario_finalizacao
+      horarioAtendimento: f.horario_atendimento
     };
 
     res.json({
