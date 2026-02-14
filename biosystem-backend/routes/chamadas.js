@@ -10,19 +10,17 @@ router.get('/', autenticado, async (req, res) => {
   try {
     const { clinica_id } = req.query;
     let sql = `
-      SELECT c.*, p.nome as paciente_nome
-      FROM chamadas c
-      LEFT JOIN pacientes p ON c.paciente_id = p.id
-      WHERE c.ativa = true
+      SELECT * FROM chamadas
+      WHERE ativa = true
     `;
     let params = [];
 
     if (clinica_id) {
-      sql += ' AND c.clinica_id = $1';
+      sql += ' AND clinica_id = $1';
       params = [clinica_id];
     }
 
-    sql += ' ORDER BY c.data_chamada DESC LIMIT 1';
+    sql += ' ORDER BY data_hora DESC LIMIT 1';
 
     const result = await query(sql, params);
 
@@ -35,10 +33,11 @@ router.get('/', autenticado, async (req, res) => {
       id: c.id,
       pacienteId: c.paciente_id,
       pacienteNome: c.paciente_nome,
+      medicoId: c.medico_id,
+      medicoNome: c.medico_nome,
       clinicaId: c.clinica_id,
-      sala: c.sala,
       ativa: c.ativa,
-      dataChamada: c.data_chamada
+      dataHora: c.data_hora
     });
   } catch (err) {
     console.error('Erro obter chamada ativa:', err);
@@ -51,19 +50,17 @@ router.get('/historico', autenticado, async (req, res) => {
   try {
     const { clinica_id } = req.query;
     let sql = `
-      SELECT c.*, p.nome as paciente_nome
-      FROM chamadas c
-      LEFT JOIN pacientes p ON c.paciente_id = p.id
+      SELECT * FROM chamadas
       WHERE 1=1
     `;
     let params = [];
 
     if (clinica_id) {
-      sql += ' AND c.clinica_id = $1';
+      sql += ' AND clinica_id = $1';
       params = [clinica_id];
     }
 
-    sql += ' ORDER BY c.data_chamada DESC LIMIT 50';
+    sql += ' ORDER BY data_hora DESC LIMIT 50';
 
     const result = await query(sql, params);
 
@@ -71,10 +68,11 @@ router.get('/historico', autenticado, async (req, res) => {
       id: c.id,
       pacienteId: c.paciente_id,
       pacienteNome: c.paciente_nome,
+      medicoId: c.medico_id,
+      medicoNome: c.medico_nome,
       clinicaId: c.clinica_id,
-      sala: c.sala,
       ativa: c.ativa,
-      dataChamada: c.data_chamada
+      dataHora: c.data_hora
     }));
 
     res.json(chamadas);
@@ -87,13 +85,26 @@ router.get('/historico', autenticado, async (req, res) => {
 // REGISTRAR CHAMADA
 router.post('/', autenticado, async (req, res) => {
   try {
-    const { paciente_id, pacienteId, clinica_id, clinicaId, sala } = req.body;
+    const { paciente_id, pacienteId, pacienteNome, paciente_nome,
+            medico_id, medicoId, medicoNome, medico_nome,
+            clinica_id, clinicaId } = req.body;
 
     const finalPacienteId = paciente_id || pacienteId;
     const finalClinicaId = clinica_id || clinicaId;
+    const finalMedicoId = medico_id || medicoId || null;
+    const finalMedicoNome = medicoNome || medico_nome || '';
 
     if (!finalPacienteId || !finalClinicaId) {
       return res.status(400).json({ error: 'Paciente e clínica são obrigatórios' });
+    }
+
+    // Buscar nome do paciente se não foi enviado
+    let finalPacienteNome = pacienteNome || paciente_nome || '';
+    if (!finalPacienteNome && finalPacienteId) {
+      try {
+        const pacResult = await query('SELECT nome FROM pacientes WHERE id = $1', [finalPacienteId]);
+        finalPacienteNome = pacResult.rows[0]?.nome || 'Paciente';
+      } catch (e) { finalPacienteNome = 'Paciente'; }
     }
 
     // Desativar chamadas anteriores da mesma clínica
@@ -103,10 +114,10 @@ router.post('/', autenticado, async (req, res) => {
     );
 
     const result = await query(
-      `INSERT INTO chamadas (paciente_id, clinica_id, sala, ativa, data_chamada)
-       VALUES ($1, $2, $3, true, NOW())
+      `INSERT INTO chamadas (paciente_id, paciente_nome, medico_id, medico_nome, clinica_id, ativa, data_hora)
+       VALUES ($1, $2, $3, $4, $5, true, NOW())
        RETURNING *`,
-      [finalPacienteId, finalClinicaId, sala || 'Consultório']
+      [finalPacienteId, finalPacienteNome, finalMedicoId, finalMedicoNome, finalClinicaId]
     );
 
     const c = result.rows[0];
@@ -115,10 +126,12 @@ router.post('/', autenticado, async (req, res) => {
       chamada: {
         id: c.id,
         pacienteId: c.paciente_id,
+        pacienteNome: c.paciente_nome,
+        medicoId: c.medico_id,
+        medicoNome: c.medico_nome,
         clinicaId: c.clinica_id,
-        sala: c.sala,
         ativa: c.ativa,
-        dataChamada: c.data_chamada
+        dataHora: c.data_hora
       }
     });
   } catch (err) {
