@@ -18,7 +18,20 @@ router.get('/', autenticado, async (req, res) => {
     }
 
     const result = await query(sql + ' ORDER BY data_cadastro DESC', params);
-    res.json(result.rows);
+
+    // Mapear para camelCase
+    const pacientes = result.rows.map(p => ({
+      id: p.id,
+      nome: p.nome,
+      cpf: p.cpf,
+      telefone: p.telefone,
+      dataNascimento: p.data_nascimento,
+      clinicaId: p.clinica_id,
+      ativo: p.ativo,
+      dataCadastro: p.data_cadastro
+    }));
+
+    res.json(pacientes);
   } catch (err) {
     console.error('Erro listar pacientes:', err);
     res.status(500).json({ error: 'Erro no servidor' });
@@ -38,7 +51,17 @@ router.get('/cpf/:cpf', autenticado, async (req, res) => {
       return res.status(404).json({ error: 'Paciente não encontrado' });
     }
 
-    res.json(result.rows[0]);
+    const p = result.rows[0];
+    res.json({
+      id: p.id,
+      nome: p.nome,
+      cpf: p.cpf,
+      telefone: p.telefone,
+      dataNascimento: p.data_nascimento,
+      clinicaId: p.clinica_id,
+      ativo: p.ativo,
+      dataCadastro: p.data_cadastro
+    });
   } catch (err) {
     console.error('Erro buscar paciente:', err);
     res.status(500).json({ error: 'Erro no servidor' });
@@ -48,10 +71,11 @@ router.get('/cpf/:cpf', autenticado, async (req, res) => {
 // CADASTRAR PACIENTE
 router.post('/', autenticado, async (req, res) => {
   try {
-    const { nome, cpf, telefone, clinica_id, clinicaId } = req.body;
+    const { nome, cpf, telefone, dataNascimento, data_nascimento, clinica_id, clinicaId } = req.body;
 
     // Suporta ambos formatos
     const finalClinicaId = clinica_id || clinicaId;
+    const finalDataNascimento = dataNascimento || data_nascimento || null;
 
     if (!nome || !cpf || !finalClinicaId) {
       return res.status(400).json({ error: 'Nome, CPF e clínica são obrigatórios' });
@@ -66,13 +90,26 @@ router.post('/', autenticado, async (req, res) => {
     }
 
     const result = await query(
-      `INSERT INTO pacientes (nome, cpf, telefone, clinica_id, ativo)
-       VALUES ($1, $2, $3, $4, true)
+      `INSERT INTO pacientes (nome, cpf, telefone, data_nascimento, clinica_id, ativo)
+       VALUES ($1, $2, $3, $4, $5, true)
        RETURNING *`,
-      [nome, cpfLimpo, telefone || '', finalClinicaId]
+      [nome, cpfLimpo, telefone || '', finalDataNascimento, finalClinicaId]
     );
 
-    res.status(201).json({ success: true, paciente: result.rows[0] });
+    const p = result.rows[0];
+    res.status(201).json({
+      success: true,
+      paciente: {
+        id: p.id,
+        nome: p.nome,
+        cpf: p.cpf,
+        telefone: p.telefone,
+        dataNascimento: p.data_nascimento,
+        clinicaId: p.clinica_id,
+        ativo: p.ativo,
+        dataCadastro: p.data_cadastro
+      }
+    });
   } catch (err) {
     console.error('Erro cadastrar paciente:', err);
     res.status(500).json({ error: 'Erro no servidor' });
@@ -82,22 +119,37 @@ router.post('/', autenticado, async (req, res) => {
 // ATUALIZAR PACIENTE
 router.put('/:id', autenticado, async (req, res) => {
   try {
-    const { nome, telefone } = req.body;
+    const { nome, telefone, dataNascimento, data_nascimento } = req.body;
+    const finalDataNascimento = dataNascimento || data_nascimento;
 
     const result = await query(
       `UPDATE pacientes
        SET nome = COALESCE($1, nome),
-           telefone = COALESCE($2, telefone)
-       WHERE id = $3
+           telefone = COALESCE($2, telefone),
+           data_nascimento = COALESCE($3, data_nascimento)
+       WHERE id = $4
        RETURNING *`,
-      [nome, telefone, req.params.id]
+      [nome, telefone, finalDataNascimento, req.params.id]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Paciente não encontrado' });
     }
 
-    res.json({ success: true, paciente: result.rows[0] });
+    const p = result.rows[0];
+    res.json({
+      success: true,
+      paciente: {
+        id: p.id,
+        nome: p.nome,
+        cpf: p.cpf,
+        telefone: p.telefone,
+        dataNascimento: p.data_nascimento,
+        clinicaId: p.clinica_id,
+        ativo: p.ativo,
+        dataCadastro: p.data_cadastro
+      }
+    });
   } catch (err) {
     console.error('Erro atualizar paciente:', err);
     res.status(500).json({ error: 'Erro no servidor' });
