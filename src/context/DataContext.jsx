@@ -796,7 +796,9 @@ export const DataProvider = ({ children }) => {
   const ehMaster = isMaster();
 
   // Helper para comparar clinicaId (suporta ambos formatos e tipos)
+  // Se usuário não tem clínica, retorna true (mostra tudo como fallback)
   const matchClinica = (item) => {
+    if (!clinicaIdUsuario) return true;
     const itemClinicaId = item.clinicaId || item.clinica_id;
     // eslint-disable-next-line eqeqeq
     return itemClinicaId == clinicaIdUsuario;

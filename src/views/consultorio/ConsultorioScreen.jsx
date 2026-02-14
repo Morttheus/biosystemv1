@@ -94,16 +94,34 @@ const ConsultorioScreen = () => {
     retorno: '',
   });
 
-  // Médico logado (suporta ambos formatos)
-  const medicoId = usuarioLogado?.medicoId || usuarioLogado?.medico_id;
+  // Médico logado - tenta encontrar o registro de médico vinculado ao usuário
   const clinicaId = getClinicaIdUsuario();
 
+  // Primeiro tenta medicoId do usuário, depois busca na tabela de médicos pelo nome
+  let medicoId = usuarioLogado?.medicoId || usuarioLogado?.medico_id;
+  if (!medicoId && usuarioLogado?.tipo === 'medico' && medicos.length > 0) {
+    // Busca o médico na tabela medicos que tem o mesmo nome (ou parte do nome)
+    const medicoVinculado = medicos.find(m => {
+      const medicoClinica = m.clinicaId || m.clinica_id;
+      // eslint-disable-next-line eqeqeq
+      return medicoClinica == clinicaId && (
+        m.nome === usuarioLogado.nome ||
+        usuarioLogado.nome?.includes(m.nome) ||
+        m.nome?.includes(usuarioLogado.nome)
+      );
+    });
+    if (medicoVinculado) {
+      medicoId = medicoVinculado.id;
+    }
+  }
+
   // Helper para comparar medicoId (suporta ambos formatos e tipos)
-  // Se médico não tem medicoId vinculado, mostra todos da clínica
-  // Pacientes sem médico atribuído também aparecem para todos os médicos da clínica
   const matchMedico = (a) => {
     const atendMedicoId = a.medicoId || a.medico_id;
     const atendClinicaId = a.clinicaId || a.clinica_id;
+
+    // Se o usuário não tem clínica, mostra tudo (fallback)
+    if (!clinicaId) return true;
 
     // Se o usuário logado não tem medicoId, mostra todos da clínica
     if (!medicoId) {
