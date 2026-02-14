@@ -4,7 +4,7 @@ const rateLimit = require('express-rate-limit');
 // Rate limiter para rotas de autenticação (mais restritivo)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // 5 tentativas por IP
+  max: 30, // 30 tentativas por IP (aumentado para evitar bloqueios em redes compartilhadas)
   message: {
     error: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
     retryAfter: 15
@@ -16,7 +16,7 @@ const authLimiter = rateLimit({
 // Rate limiter geral para API
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minuto
-  max: 100, // 100 requisições por minuto
+  max: 300, // 300 requisições por minuto (aumentado para suportar polling em tempo real)
   message: {
     error: 'Muitas requisições. Tente novamente em alguns segundos.',
   },

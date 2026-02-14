@@ -138,7 +138,7 @@ router.delete('/:id', autenticado, async (req, res) => {
     }
 
     const result = await query(
-      'UPDATE prontuarios SET ativo = false, data_deletado = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id',
+      'UPDATE prontuarios SET ativo = false WHERE id = $1 RETURNING id',
       [prontuarioId]
     );
 

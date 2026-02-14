@@ -159,14 +159,26 @@ router.delete('/:id', autenticado, async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
 
-    // Apenas master pode desativar usuários
-    if (req.usuario.tipo !== 'master') {
-      return res.status(403).json({ error: 'Apenas usuários Master podem desativar usuários' });
-    }
-
     // Não pode desativar a si mesmo
     if (req.usuario.id === userId) {
       return res.status(400).json({ error: 'Você não pode desativar seu próprio usuário' });
+    }
+
+    // Master pode deletar qualquer um, Admin pode deletar da sua clínica
+    if (req.usuario.tipo !== 'master' && req.usuario.tipo !== 'admin') {
+      return res.status(403).json({ error: 'Permissão negada' });
+    }
+
+    // Se é admin, verificar se o usuário é da mesma clínica
+    if (req.usuario.tipo === 'admin') {
+      const checkUser = await query('SELECT clinica_id FROM usuarios WHERE id = $1', [userId]);
+      if (checkUser.rows.length === 0) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+      // eslint-disable-next-line eqeqeq
+      if (checkUser.rows[0].clinica_id != req.usuario.clinicaId) {
+        return res.status(403).json({ error: 'Permissão negada - usuário de outra clínica' });
+      }
     }
 
     const result = await query(
