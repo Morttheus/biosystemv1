@@ -757,6 +757,7 @@ const ConsultorioScreen = () => {
                         size="lg"
                         onClick={() => {
                           const medicoInfo = medicos.find(m => m.id === medicoId);
+                          const logoUrl = window.location.origin + '/logo-biovisao.png';
                           const conteudoImpressao = `
                             <!DOCTYPE html>
                             <html>
@@ -764,24 +765,26 @@ const ConsultorioScreen = () => {
                               <title>Receita de Óculos</title>
                               <style>
                                 @page { size: A4; margin: 15mm; }
-                                body { font-family: Arial, sans-serif; padding: 20px; }
+                                body { font-family: Arial, sans-serif; padding: 20px; position: relative; }
                                 .watermark {
                                   position: fixed;
                                   top: 50%;
                                   left: 50%;
                                   transform: translate(-50%, -50%);
-                                  opacity: 0.06;
-                                  z-index: -1;
-                                  width: 350px;
+                                  opacity: 0.08;
+                                  z-index: 0;
+                                  width: 400px;
                                   height: auto;
+                                  pointer-events: none;
                                 }
+                                .content { position: relative; z-index: 1; }
                                 .header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #0d9488; padding-bottom: 15px; }
                                 .header h1 { font-size: 22px; color: #0d9488; margin-bottom: 5px; }
                                 .header .data { font-size: 12px; color: #666; }
-                                .paciente { background: #f0fdfa; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #0d9488; }
+                                .paciente { background: rgba(240, 253, 250, 0.8); padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #0d9488; }
                                 .paciente h3 { margin: 0 0 10px 0; font-size: 14px; color: #0d9488; }
                                 .paciente-info { font-size: 13px; }
-                                .paciente-info span { display: inline-block; margin-right: 25px; }
+                                .paciente-info span { display: inline-block; margin-right: 25px; margin-bottom: 4px; }
                                 .receita-table { width: 100%; border-collapse: collapse; margin: 25px 0; }
                                 .receita-table th { background: #0d9488; color: white; padding: 12px; text-align: center; font-size: 13px; }
                                 .receita-table td { border: 1px solid #ddd; padding: 12px; text-align: center; font-size: 14px; }
@@ -795,11 +798,15 @@ const ConsultorioScreen = () => {
                                 .medico .nome { font-weight: bold; font-size: 14px; }
                                 .medico .crm { font-size: 12px; color: #666; }
                                 .validade { text-align: center; font-size: 11px; color: #888; margin-top: 30px; }
-                                @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+                                @media print {
+                                  body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+                                  .watermark { position: fixed; opacity: 0.08; display: block !important; }
+                                }
                               </style>
                             </head>
                             <body>
-                              <img src="/logo-biovisao.png" alt="" class="watermark" />
+                              <img src="${logoUrl}" alt="" class="watermark" />
+                              <div class="content">
                               <div class="header">
                                 <h1>RECEITA DE ÓCULOS</h1>
                                 <p class="data">Data: ${new Date().toLocaleDateString('pt-BR')}</p>
@@ -807,9 +814,9 @@ const ConsultorioScreen = () => {
                               <div class="paciente">
                                 <h3>Dados do Paciente</h3>
                                 <div class="paciente-info">
-                                  <span><strong>Nome:</strong> ${pacienteAtual?.nome || '-'}</span>
+                                  <span><strong>Nome Completo:</strong> ${pacienteAtual?.nome || '-'}</span>
                                   <span><strong>CPF:</strong> ${formatarCPF(pacienteAtual?.cpf) || '-'}</span>
-                                  <span><strong>Nasc.:</strong> ${formatarData(pacienteAtual?.dataNascimento) || '-'}</span>
+                                  <span><strong>Data Nasc.:</strong> ${formatarData(pacienteAtual?.dataNascimento) || '-'}</span>
                                 </div>
                               </div>
                               <table class="receita-table">
@@ -849,6 +856,7 @@ const ConsultorioScreen = () => {
                                 </div>
                               </div>
                               <p class="validade">Esta receita é válida por 6 meses a partir da data de emissão.</p>
+                              </div>
                             </body>
                             </html>
                           `;
@@ -856,7 +864,7 @@ const ConsultorioScreen = () => {
                           janelaImpressao.document.write(conteudoImpressao);
                           janelaImpressao.document.close();
                           janelaImpressao.focus();
-                          janelaImpressao.print();
+                          setTimeout(() => janelaImpressao.print(), 300);
                         }}
                       >
                         Imprimir Receita de Óculos
@@ -891,7 +899,7 @@ const ConsultorioScreen = () => {
                         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                           <h3 className="font-semibold text-gray-700 mb-2">Paciente</h3>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-                            <p><strong>Nome:</strong> {pacienteAtual?.nome || '-'}</p>
+                            <p><strong>Nome Completo:</strong> {pacienteAtual?.nome || '-'}</p>
                             <p><strong>CPF:</strong> {formatarCPF(pacienteAtual?.cpf) || '-'}</p>
                             <p><strong>Data Nasc.:</strong> {formatarData(pacienteAtual?.dataNascimento) || '-'}</p>
                           </div>
@@ -960,6 +968,7 @@ Exemplo:
                           size="lg"
                           onClick={() => {
                             const medicoInfo = medicos.find(m => m.id === medicoId);
+                            const logoUrl = window.location.origin + '/logo-biovisao.png';
                             const conteudoImpressao = `
                               <!DOCTYPE html>
                               <html>
@@ -973,18 +982,20 @@ Exemplo:
                                     top: 50%;
                                     left: 50%;
                                     transform: translate(-50%, -50%);
-                                    opacity: 0.06;
-                                    z-index: -1;
+                                    opacity: 0.08;
+                                    z-index: 0;
                                     width: 400px;
                                     height: auto;
                                     pointer-events: none;
                                   }
+                                  .content { position: relative; z-index: 1; }
                                   .header { text-align: center; margin-bottom: 30px; }
                                   .header h1 { font-size: 24px; margin-bottom: 5px; }
                                   .header .data { font-size: 12px; color: #666; }
                                   .paciente { background: rgba(245, 245, 245, 0.8); padding: 15px; border-radius: 8px; margin-bottom: 30px; }
                                   .paciente h3 { margin: 0 0 10px 0; font-size: 14px; }
-                                  .paciente-info { display: flex; gap: 30px; font-size: 13px; }
+                                  .paciente-info { display: flex; flex-wrap: wrap; gap: 20px; font-size: 13px; }
+                                  .paciente-info span { margin-bottom: 4px; }
                                   .prescricao { min-height: 300px; white-space: pre-wrap; line-height: 1.8; font-size: 14px; margin-bottom: 30px; }
                                   .observacoes { font-size: 13px; color: #555; margin-bottom: 40px; font-style: italic; }
                                   .medico { text-align: center; margin-top: 60px; }
@@ -993,12 +1004,13 @@ Exemplo:
                                   .medico .crm { font-size: 12px; color: #666; }
                                   @media print {
                                     body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-                                    .watermark { position: fixed; }
+                                    .watermark { position: fixed; opacity: 0.08; display: block !important; }
                                   }
                                 </style>
                               </head>
                               <body>
-                                <img src="/logo-biovisao.png" alt="" class="watermark" />
+                                <img src="${logoUrl}" alt="" class="watermark" />
+                                <div class="content">
                                 <div class="header">
                                   <h1>PRESCRIÇÃO</h1>
                                   <p class="data">Data: ${new Date().toLocaleDateString('pt-BR')}</p>
@@ -1006,7 +1018,7 @@ Exemplo:
                                 <div class="paciente">
                                   <h3>Paciente</h3>
                                   <div class="paciente-info">
-                                    <span><strong>Nome:</strong> ${pacienteAtual?.nome || '-'}</span>
+                                    <span><strong>Nome Completo:</strong> ${pacienteAtual?.nome || '-'}</span>
                                     <span><strong>CPF:</strong> ${formatarCPF(pacienteAtual?.cpf) || '-'}</span>
                                     <span><strong>Data Nasc.:</strong> ${formatarData(pacienteAtual?.dataNascimento) || '-'}</span>
                                   </div>
@@ -1019,6 +1031,7 @@ Exemplo:
                                     <p class="crm">CRM: ${medicoInfo?.crm || usuarioLogado?.crm || '-'}</p>
                                   </div>
                                 </div>
+                                </div>
                               </body>
                               </html>
                             `;
@@ -1026,7 +1039,7 @@ Exemplo:
                             janelaImpressao.document.write(conteudoImpressao);
                             janelaImpressao.document.close();
                             janelaImpressao.focus();
-                            janelaImpressao.print();
+                            setTimeout(() => janelaImpressao.print(), 300);
                           }}
                           className="flex-1"
                         >
