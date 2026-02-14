@@ -786,7 +786,8 @@ export const DataProvider = ({ children }) => {
       return chamadas;
     }
     
-    return chamadas.filter(c => c.clinicaId === clinicaIdUsuario);
+    // eslint-disable-next-line eqeqeq
+    return chamadas.filter(c => (c.clinicaId || c.clinica_id) == clinicaIdUsuario);
   };
 
   // ============ DADOS FILTRADOS POR CLÍNICA ============

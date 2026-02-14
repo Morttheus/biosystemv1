@@ -36,7 +36,8 @@ const SalaEsperaScreen = () => {
             const agora = new Date();
             const dataChamada = new Date(chamada.dataHora);
             const diffSegundos = (agora - dataChamada) / 1000;
-            if (diffSegundos < 30 && chamada.clinicaId === clinicaIdPainel) {
+            // eslint-disable-next-line eqeqeq
+            if (diffSegundos < 30 && (chamada.clinicaId || chamada.clinica_id) == clinicaIdPainel) {
               setChamadaAPI(chamada);
             } else {
               setChamadaAPI(null);
@@ -79,7 +80,8 @@ const SalaEsperaScreen = () => {
   const chamadaAtiva = chamadaAPI || chamadaAtual;
 
   // Filtra a chamada atual para mostrar apenas da mesma clínica
-  const chamadaAtualFiltrada = chamadaAtiva && chamadaAtiva.clinicaId === clinicaIdPainel ? chamadaAtiva : null;
+  // eslint-disable-next-line eqeqeq
+  const chamadaAtualFiltrada = chamadaAtiva && (chamadaAtiva.clinicaId || chamadaAtiva.clinica_id) == clinicaIdPainel ? chamadaAtiva : null;
 
   // Timer para a chamada
   useEffect(() => {

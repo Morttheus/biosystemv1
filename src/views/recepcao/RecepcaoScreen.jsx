@@ -19,7 +19,8 @@ import {
   Phone,
   FileText,
   Loader2,
-  Calendar
+  Calendar,
+  Trash2
 } from 'lucide-react';
 
 const RecepcaoScreen = () => {
@@ -33,6 +34,7 @@ const RecepcaoScreen = () => {
     buscarPacientePorCPF,
     cadastrarPaciente,
     adicionarNaFila,
+    removerDaFila,
     atualizarFila,
   } = useData();
 
@@ -70,18 +72,21 @@ const RecepcaoScreen = () => {
 
   // Clínica do usuário logado (suporta ambos formatos)
   const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
-  const clinicaAtual = clinicas.find(c => c.id === clinicaId);
+  // eslint-disable-next-line eqeqeq
+  const clinicaAtual = clinicas.find(c => c.id == clinicaId);
 
-  // Médicos da clínica (suporta ambos formatos de campo)
+  // Médicos da clínica (suporta ambos formatos de campo e tipos)
   const medicosClinica = medicos.filter(m => {
     const medicoClinicaId = m.clinicaId || m.clinica_id;
-    return medicoClinicaId === clinicaId;
+    // eslint-disable-next-line eqeqeq
+    return medicoClinicaId == clinicaId;
   });
 
-  // Fila da clínica (suporta ambos formatos de campo e status)
+  // Fila da clínica (suporta ambos formatos de campo, tipos e status)
   const filaClinica = filaAtendimento.filter(a => {
     const atendClinicaId = a.clinicaId || a.clinica_id;
-    return atendClinicaId === clinicaId && a.status !== 'atendido';
+    // eslint-disable-next-line eqeqeq
+    return atendClinicaId == clinicaId && a.status !== 'atendido';
   });
 
   const formatarCPF = (valor) => {
@@ -249,6 +254,17 @@ const RecepcaoScreen = () => {
       setMensagem({ tipo: 'erro', texto: err.message || 'Erro ao adicionar à fila' });
     } finally {
       setCarregando(false);
+    }
+  };
+
+  const handleRemoverDaFila = async (atendimentoId, pacienteNome) => {
+    if (!window.confirm(`Tem certeza que deseja remover ${pacienteNome} da fila?`)) return;
+
+    try {
+      await removerDaFila(atendimentoId);
+      setMensagem({ tipo: 'sucesso', texto: `${pacienteNome} removido(a) da fila.` });
+    } catch (err) {
+      setMensagem({ tipo: 'erro', texto: err.message || 'Erro ao remover da fila' });
     }
   };
 
@@ -490,17 +506,28 @@ const RecepcaoScreen = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className={`px-3 py-1 rounded-full text-sm ${
-                      status === 'atendendo'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-yellow-500 text-white'
-                    }`}>
-                      {status === 'atendendo' ? 'Em Atendimento' : 'Aguardando'}
-                    </span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Chegou: {formatarHora(horarioChegada)}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        status === 'atendendo'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-yellow-500 text-white'
+                      }`}>
+                        {status === 'atendendo' ? 'Em Atendimento' : 'Aguardando'}
+                      </span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Chegou: {formatarHora(horarioChegada)}
+                      </p>
+                    </div>
+                    {status !== 'atendendo' && (
+                      <button
+                        onClick={() => handleRemoverDaFila(atendimento.id, pacienteNome)}
+                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                        title="Remover da fila"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
                   </div>
                 </div>
               );

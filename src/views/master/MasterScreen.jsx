@@ -642,7 +642,8 @@ const MasterScreen = () => {
                 </thead>
                 <tbody>
                   {clinicas.map(clinica => {
-                    const usuariosClinica = todosUsuarios.filter(u => u.clinicaId === clinica.id);
+                    // eslint-disable-next-line eqeqeq
+                    const usuariosClinica = todosUsuarios.filter(u => (u.clinicaId || u.clinica_id) == clinica.id);
                     return (
                       <tr key={clinica.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="py-3 px-4 font-medium">{clinica.nome}</td>

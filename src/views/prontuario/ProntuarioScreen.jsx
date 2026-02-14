@@ -181,7 +181,7 @@ const ProntuarioScreen = () => {
                               {pacienteSelecionado.nome}
                             </h2>
                             <p className="text-blue-600 font-medium">
-                              {pacienteSelecionado.prontuarioId}
+                              {pacienteSelecionado.prontuarioId || pacienteSelecionado.prontuario_id || '-'}
                             </p>
                           </div>
                           <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -219,7 +219,7 @@ const ProntuarioScreen = () => {
                           )}
                         </div>
                         <p className="text-xs text-gray-500 mt-3">
-                          Cadastrado em: {formatarDataHora(pacienteSelecionado.dataCadastro)}
+                          Cadastrado em: {formatarDataHora(pacienteSelecionado.dataCadastro || pacienteSelecionado.data_cadastro)}
                         </p>
                       </div>
                     </div>
