@@ -70,12 +70,13 @@ router.post('/', autenticado, async (req, res) => {
     const valor = req.body.valor || 0;
     const { descricao } = req.body;
 
-    if (!pacienteId || !medicoId || !clinicaId) {
-      return res.status(400).json({ error: 'Paciente, médico e clínica são obrigatórios' });
+    if (!pacienteId || !clinicaId) {
+      return res.status(400).json({ error: 'Paciente e clínica são obrigatórios' });
     }
 
-    // Verificar permissão: não-master só pode criar na sua clínica
-    if (req.usuario.tipo !== 'master' && parseInt(clinicaId) !== req.usuario.clinicaId) {
+    // Verificar permissão: não-master só pode criar na sua clínica (usa == para string/number)
+    // eslint-disable-next-line eqeqeq
+    if (req.usuario.tipo !== 'master' && clinicaId != req.usuario.clinicaId) {
       return res.status(403).json({ error: 'Permissão negada para criar prontuário em outra clínica' });
     }
 
@@ -105,7 +106,8 @@ router.put('/:id', autenticado, async (req, res) => {
     }
 
     // Verificar permissão: master pode editar qualquer um, outros só da sua clínica
-    if (req.usuario.tipo !== 'master' && checkPront.rows[0].clinica_id !== req.usuario.clinicaId) {
+    // eslint-disable-next-line eqeqeq
+    if (req.usuario.tipo !== 'master' && checkPront.rows[0].clinica_id != req.usuario.clinicaId) {
       return res.status(403).json({ error: 'Permissão negada' });
     }
 
