@@ -443,19 +443,20 @@ export const DataProvider = ({ children }) => {
 
   const finalizarAtendimento = async (atendimentoId, dadosConsulta) => {
     try {
-      const atendimento = filaAtendimento.find(a => a.id === atendimentoId);
+      // eslint-disable-next-line eqeqeq
+      const atendimento = filaAtendimento.find(a => a.id == atendimentoId);
       if (!atendimento) return null;
 
-      // Obtém IDs corretamente (suporta ambos formatos)
+      // Obtém IDs corretamente (suporta ambos formatos + fallback dos dadosConsulta)
       const pacienteId = atendimento.pacienteId || atendimento.paciente_id;
-      const atendMedicoId = atendimento.medicoId || atendimento.medico_id;
+      const atendMedicoId = atendimento.medicoId || atendimento.medico_id || dadosConsulta?.medicoId;
       const pacienteNome = atendimento.pacienteNome || atendimento.paciente_nome || '';
-      const medicoNome = atendimento.medicoNome || atendimento.medico_nome || '';
+      const medicoNome = atendimento.medicoNome || atendimento.medico_nome || dadosConsulta?.medicoNome || '';
       const procedimentoId = atendimento.procedimentoId || atendimento.procedimento_id;
       const valor = parseFloat(atendimento.valor) || parseFloat(dadosConsulta?.valor) || 0;
 
       // Cria registro no prontuário via API
-      const clinicaId = usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
+      const clinicaId = dadosConsulta?.clinicaId || usuarioLogado?.clinicaId || usuarioLogado?.clinica_id;
       const resultadoProntuario = await apiService.criarProntuario({
         pacienteId: pacienteId,
         medicoId: atendMedicoId,
@@ -479,22 +480,23 @@ export const DataProvider = ({ children }) => {
         setProntuarios(prev => [...prev, resultadoProntuario.prontuario]);
       }
 
-      // Atualiza status para 'atendido' ao invés de remover (para relatórios)
-      // Inclui o valor na atualização para ter certeza de que será salvo
-      await apiService.atualizarFila(atendimentoId, { 
+      // Atualiza status para 'atendido'
+      await apiService.atualizarFila(atendimentoId, {
         status: 'atendido',
         valor: valor,
         procedimentoId: procedimentoId
       });
       setFilaAtendimento(prev => prev.map(a =>
-        a.id === atendimentoId
-          ? { ...a, status: 'atendido', horario_finalizacao: new Date().toISOString(), valor: valor }
+        // eslint-disable-next-line eqeqeq
+        a.id == atendimentoId
+          ? { ...a, status: 'atendido', horarioAtendimento: new Date().toISOString(), valor: valor }
           : a
       ));
 
       toast.success('Atendimento finalizado!');
       return resultadoProntuario.prontuario;
     } catch (err) {
+      console.error('Erro ao finalizar atendimento:', err);
       toast.error('Erro ao finalizar atendimento');
       throw err;
     }

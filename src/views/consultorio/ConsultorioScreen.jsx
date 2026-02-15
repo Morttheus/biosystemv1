@@ -248,6 +248,9 @@ const ConsultorioScreen = () => {
       prescricao: consulta.prescricao,
       observacoes: consulta.observacoes,
       retorno: consulta.retorno,
+      medicoId: medicoId,
+      medicoNome: usuarioLogado?.nome,
+      clinicaId: clinicaId,
     };
 
     try {
