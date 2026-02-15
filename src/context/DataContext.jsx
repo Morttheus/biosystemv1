@@ -534,8 +534,10 @@ export const DataProvider = ({ children }) => {
     }
 
     // Busca nomes do paciente e médico se não estiverem na descrição
-    const paciente = pacientes.find(pac => pac.id === pPacienteId);
-    const medico = medicos.find(med => med.id === pMedicoId);
+    // eslint-disable-next-line eqeqeq
+    const paciente = pacientes.find(pac => pac.id == pPacienteId);
+    // eslint-disable-next-line eqeqeq
+    const medico = medicos.find(med => med.id == pMedicoId);
 
     // Obtém procedimento_id com suporte a ambos formatos
     const pProcedimentoId = p.procedimentoId || p.procedimento_id;
@@ -576,7 +578,8 @@ export const DataProvider = ({ children }) => {
     return prontuarios
       .filter(p => {
         const pPacienteId = p.pacienteId || p.paciente_id;
-        return pPacienteId === pacienteId;
+        // eslint-disable-next-line eqeqeq
+        return pPacienteId == pacienteId;
       })
       .map(parsearProntuario)
       .sort((a, b) => new Date(b.data) - new Date(a.data));

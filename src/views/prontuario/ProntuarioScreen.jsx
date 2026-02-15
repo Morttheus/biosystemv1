@@ -141,7 +141,7 @@ const ProntuarioScreen = () => {
                       <div>
                         <p className="font-medium text-sm">{paciente.nome}</p>
                         <p className="text-xs text-gray-500">
-                          CPF: {formatarCPF(paciente.cpf)}
+                          Nº {paciente.numeroProntuario || '-'} | CPF: {formatarCPF(paciente.cpf)}
                         </p>
                       </div>
                     </div>
@@ -181,7 +181,7 @@ const ProntuarioScreen = () => {
                               {pacienteSelecionado.nome}
                             </h2>
                             <p className="text-blue-600 font-medium">
-                              {pacienteSelecionado.prontuarioId || pacienteSelecionado.prontuario_id || '-'}
+                              Prontuário Nº: {pacienteSelecionado.numeroProntuario || '-'}
                             </p>
                           </div>
                           <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
