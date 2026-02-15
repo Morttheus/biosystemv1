@@ -5,6 +5,31 @@ const { autenticado } = require('../utils/auth');
 
 const router = express.Router();
 
+// Helper para mapear paciente para camelCase
+const mapPaciente = (p) => ({
+  id: p.id,
+  nome: p.nome,
+  cpf: p.cpf,
+  telefone: p.telefone,
+  dataNascimento: p.data_nascimento,
+  numeroProntuario: p.numero_prontuario,
+  clinicaId: p.clinica_id,
+  ativo: p.ativo,
+  dataCadastro: p.data_cadastro
+});
+
+// Gera próximo número de prontuário sequencial
+const gerarNumeroProntuario = async () => {
+  const result = await query(
+    "SELECT numero_prontuario FROM pacientes WHERE numero_prontuario IS NOT NULL ORDER BY numero_prontuario DESC LIMIT 1"
+  );
+  if (result.rows.length === 0) {
+    return '00001';
+  }
+  const ultimo = parseInt(result.rows[0].numero_prontuario) || 0;
+  return String(ultimo + 1).padStart(5, '0');
+};
+
 // LISTAR PACIENTES
 router.get('/', autenticado, async (req, res) => {
   try {
@@ -18,20 +43,7 @@ router.get('/', autenticado, async (req, res) => {
     }
 
     const result = await query(sql + ' ORDER BY data_cadastro DESC', params);
-
-    // Mapear para camelCase
-    const pacientes = result.rows.map(p => ({
-      id: p.id,
-      nome: p.nome,
-      cpf: p.cpf,
-      telefone: p.telefone,
-      dataNascimento: p.data_nascimento,
-      clinicaId: p.clinica_id,
-      ativo: p.ativo,
-      dataCadastro: p.data_cadastro
-    }));
-
-    res.json(pacientes);
+    res.json(result.rows.map(mapPaciente));
   } catch (err) {
     console.error('Erro listar pacientes:', err);
     res.status(500).json({ error: 'Erro no servidor' });
@@ -51,17 +63,7 @@ router.get('/cpf/:cpf', autenticado, async (req, res) => {
       return res.status(404).json({ error: 'Paciente não encontrado' });
     }
 
-    const p = result.rows[0];
-    res.json({
-      id: p.id,
-      nome: p.nome,
-      cpf: p.cpf,
-      telefone: p.telefone,
-      dataNascimento: p.data_nascimento,
-      clinicaId: p.clinica_id,
-      ativo: p.ativo,
-      dataCadastro: p.data_cadastro
-    });
+    res.json(mapPaciente(result.rows[0]));
   } catch (err) {
     console.error('Erro buscar paciente:', err);
     res.status(500).json({ error: 'Erro no servidor' });
@@ -89,27 +91,17 @@ router.post('/', autenticado, async (req, res) => {
       return res.status(400).json({ error: 'Paciente já cadastrado com este CPF' });
     }
 
+    // Gera número de prontuário único automaticamente
+    const numeroProntuario = await gerarNumeroProntuario();
+
     const result = await query(
-      `INSERT INTO pacientes (nome, cpf, telefone, data_nascimento, clinica_id, ativo)
-       VALUES ($1, $2, $3, $4, $5, true)
+      `INSERT INTO pacientes (nome, cpf, telefone, data_nascimento, numero_prontuario, clinica_id, ativo)
+       VALUES ($1, $2, $3, $4, $5, $6, true)
        RETURNING *`,
-      [nome, cpfLimpo, telefone || '', finalDataNascimento, finalClinicaId]
+      [nome, cpfLimpo, telefone || '', finalDataNascimento, numeroProntuario, finalClinicaId]
     );
 
-    const p = result.rows[0];
-    res.status(201).json({
-      success: true,
-      paciente: {
-        id: p.id,
-        nome: p.nome,
-        cpf: p.cpf,
-        telefone: p.telefone,
-        dataNascimento: p.data_nascimento,
-        clinicaId: p.clinica_id,
-        ativo: p.ativo,
-        dataCadastro: p.data_cadastro
-      }
-    });
+    res.status(201).json({ success: true, paciente: mapPaciente(result.rows[0]) });
   } catch (err) {
     console.error('Erro cadastrar paciente:', err);
     res.status(500).json({ error: 'Erro no servidor' });
@@ -136,20 +128,7 @@ router.put('/:id', autenticado, async (req, res) => {
       return res.status(404).json({ error: 'Paciente não encontrado' });
     }
 
-    const p = result.rows[0];
-    res.json({
-      success: true,
-      paciente: {
-        id: p.id,
-        nome: p.nome,
-        cpf: p.cpf,
-        telefone: p.telefone,
-        dataNascimento: p.data_nascimento,
-        clinicaId: p.clinica_id,
-        ativo: p.ativo,
-        dataCadastro: p.data_cadastro
-      }
-    });
+    res.json({ success: true, paciente: mapPaciente(result.rows[0]) });
   } catch (err) {
     console.error('Erro atualizar paciente:', err);
     res.status(500).json({ error: 'Erro no servidor' });
