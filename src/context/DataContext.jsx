@@ -666,7 +666,7 @@ export const DataProvider = ({ children }) => {
           console.error('Erro ao salvar chamada no localStorage:', e);
         }
 
-        // Desativa a chamada localmente após 30 segundos
+        // Desativa a chamada localmente após 15 segundos
         setTimeout(() => {
           setChamadaAtual(null);
           setChamadas(prev => prev.map(c => c.id === novaChamada.id ? { ...c, ativa: false } : c));
@@ -675,7 +675,7 @@ export const DataProvider = ({ children }) => {
           } catch (e) {
             console.error('Erro ao remover chamada do localStorage:', e);
           }
-        }, 30000);
+        }, 15000);
 
         return novaChamada;
       }
@@ -748,12 +748,12 @@ export const DataProvider = ({ children }) => {
       const chamadaSalva = localStorage.getItem('biosystem_chamada_atual');
       if (chamadaSalva) {
         const chamada = JSON.parse(chamadaSalva);
-        // Verifica se a chamada ainda é válida (menos de 30 segundos)
+        // Verifica se a chamada ainda é válida (menos de 15 segundos)
         const agora = new Date();
         const dataChamada = new Date(chamada.dataHora);
         const diffSegundos = (agora - dataChamada) / 1000;
 
-        if (diffSegundos < 30) {
+        if (diffSegundos < 15) {
           setChamadaAtual(chamada);
           setChamadas(prev => {
             if (!prev.find(c => c.id === chamada.id)) {

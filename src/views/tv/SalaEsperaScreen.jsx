@@ -1,27 +1,37 @@
 // src/views/tv/SalaEsperaScreen.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/api';
 import { Volume2, Clock, User, Stethoscope, LogOut } from 'lucide-react';
 
+const TEMPO_CHAMADA = 15; // segundos de exibição da chamada
+
 const SalaEsperaScreen = () => {
   const { chamadaAtual, getClinicaIdUsuario } = useData();
   const { logout } = useAuth();
-  const [tempoRestante, setTempoRestante] = useState(30);
+  const [tempoRestante, setTempoRestante] = useState(TEMPO_CHAMADA);
   const [exibirChamada, setExibirChamada] = useState(false);
+  const [chamadaExibida, setChamadaExibida] = useState(null);
   const [chamadaAPI, setChamadaAPI] = useState(null);
   const [historicoChamadas, setHistoricoChamadas] = useState([]);
   const chamadaIdRef = useRef(null);
 
-  // Obtém a clínica do usuário painel
   const clinicaIdPainel = getClinicaIdUsuario();
 
-  // Polling para verificar chamadas na API (funciona entre dispositivos diferentes)
+  // Desativa a chamada na API quando o timer expirar
+  const desativarChamada = useCallback(async (chamadaId) => {
+    try {
+      await apiService.desativarChamada(chamadaId);
+    } catch (e) {
+      console.error('Erro ao desativar chamada:', e);
+    }
+  }, []);
+
+  // Polling para verificar chamadas na API
   useEffect(() => {
     const verificarChamadaAPI = async () => {
       try {
-        // Busca chamada ativa na API
         const chamada = await apiService.obterChamadaAtiva(clinicaIdPainel);
         if (chamada && chamada.ativa) {
           setChamadaAPI(chamada);
@@ -29,16 +39,15 @@ const SalaEsperaScreen = () => {
           setChamadaAPI(null);
         }
       } catch (e) {
-        // Se API falhar, tenta localStorage como fallback
         try {
           const chamadaSalva = localStorage.getItem('biosystem_chamada_atual');
           if (chamadaSalva) {
             const chamada = JSON.parse(chamadaSalva);
             const agora = new Date();
-            const dataChamada = new Date(chamada.dataHora || chamada.dataChamada || chamada.dataHora);
+            const dataChamada = new Date(chamada.dataHora || chamada.dataChamada);
             const diffSegundos = (agora - dataChamada) / 1000;
             // eslint-disable-next-line eqeqeq
-            if (diffSegundos < 30 && (chamada.clinicaId || chamada.clinica_id) == clinicaIdPainel) {
+            if (diffSegundos < TEMPO_CHAMADA && (chamada.clinicaId || chamada.clinica_id) == clinicaIdPainel) {
               setChamadaAPI(chamada);
             } else {
               setChamadaAPI(null);
@@ -50,7 +59,6 @@ const SalaEsperaScreen = () => {
       }
     };
 
-    // Busca histórico de chamadas
     const carregarHistorico = async () => {
       try {
         const historico = await apiService.obterHistoricoChamadas(clinicaIdPainel);
@@ -58,17 +66,14 @@ const SalaEsperaScreen = () => {
           setHistoricoChamadas(historico);
         }
       } catch (e) {
-        // Silencia erro de histórico
+        // silencia
       }
     };
 
-    // Verifica imediatamente
     verificarChamadaAPI();
     carregarHistorico();
 
-    // Polling a cada 2 segundos para capturar chamadas da API
     const interval = setInterval(verificarChamadaAPI, 2000);
-    // Atualiza histórico a cada 5 segundos
     const historicoInterval = setInterval(carregarHistorico, 5000);
 
     return () => {
@@ -77,31 +82,26 @@ const SalaEsperaScreen = () => {
     };
   }, [clinicaIdPainel]);
 
-  // Usa chamadaAPI da API OU chamadaAtual do context
   const chamadaAtiva = chamadaAPI || chamadaAtual;
 
-  // Filtra a chamada atual para mostrar apenas da mesma clínica
   // eslint-disable-next-line eqeqeq
   const chamadaAtualFiltrada = chamadaAtiva && (chamadaAtiva.clinicaId || chamadaAtiva.clinica_id) == clinicaIdPainel ? chamadaAtiva : null;
 
-  // Timer para a chamada - usa chamadaIdRef para evitar reset a cada poll
+  // Detecta chamada nova e inicia exibição
   useEffect(() => {
     if (chamadaAtualFiltrada && chamadaAtualFiltrada.ativa) {
-      // Só inicia o timer se é uma chamada NOVA (ID diferente)
+      // Só inicia se é uma chamada com ID diferente da que já foi exibida
       if (chamadaIdRef.current !== chamadaAtualFiltrada.id) {
         chamadaIdRef.current = chamadaAtualFiltrada.id;
+        setChamadaExibida(chamadaAtualFiltrada);
         setExibirChamada(true);
-        setTempoRestante(30);
-      }
-    } else {
-      if (chamadaIdRef.current !== null) {
-        chamadaIdRef.current = null;
-        setExibirChamada(false);
+        setTempoRestante(TEMPO_CHAMADA);
       }
     }
+    // NÃO resetar quando chamada fica null — o timer cuida de esconder
   }, [chamadaAtualFiltrada]);
 
-  // Countdown timer separado
+  // Countdown timer
   useEffect(() => {
     if (!exibirChamada) return;
 
@@ -110,7 +110,11 @@ const SalaEsperaScreen = () => {
         if (prev <= 1) {
           clearInterval(interval);
           setExibirChamada(false);
-          chamadaIdRef.current = null;
+          // Desativa a chamada na API para não ser detectada novamente
+          if (chamadaIdRef.current) {
+            desativarChamada(chamadaIdRef.current);
+          }
+          // NÃO reseta chamadaIdRef — mantém o ID para não re-exibir a mesma chamada
           return 0;
         }
         return prev - 1;
@@ -118,17 +122,16 @@ const SalaEsperaScreen = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [exibirChamada]);
+  }, [exibirChamada, desativarChamada]);
 
-  // Som de chamada (opcional - usar Web Audio API)
+  // Som de chamada
   useEffect(() => {
-    if (exibirChamada && chamadaAtualFiltrada) {
+    if (exibirChamada && chamadaExibida) {
       reproduzirSom();
     }
   }, [exibirChamada]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reproduzirSom = () => {
-    // Som simples usando Web Audio API
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -137,7 +140,6 @@ const SalaEsperaScreen = () => {
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      // Frequência em Hz para um som mais alto e notável
       oscillator.frequency.value = 800;
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
@@ -149,7 +151,6 @@ const SalaEsperaScreen = () => {
     }
   };
 
-  // Usa histórico de chamadas da API (já filtrado por clínica)
   const chamadasDia = historicoChamadas;
 
   return (
@@ -161,9 +162,8 @@ const SalaEsperaScreen = () => {
       </div>
 
       {/* Painel de Chamada Atual */}
-      {exibirChamada && chamadaAtualFiltrada ? (
+      {exibirChamada && chamadaExibida ? (
         <div className="w-full max-w-4xl">
-          {/* Animação de alerta */}
           <div className="mb-8 animate-pulse">
             <div className="bg-gradient-to-r from-yellow-400 via-red-400 to-yellow-400 rounded-lg p-1">
               <div className="bg-teal-900 rounded-lg p-8 border-4 border-yellow-400">
@@ -180,7 +180,7 @@ const SalaEsperaScreen = () => {
                 <div className="bg-white bg-opacity-10 rounded-2xl p-8 mb-6 border-2 border-yellow-400">
                   <p className="text-yellow-200 text-lg mb-2">PACIENTE</p>
                   <p className="text-white text-6xl font-bold mb-2">
-                    {chamadaAtualFiltrada.pacienteNome}
+                    {chamadaExibida.pacienteNome}
                   </p>
                   <div className="flex items-center justify-center gap-2 text-yellow-300">
                     <User size={20} />
@@ -189,14 +189,14 @@ const SalaEsperaScreen = () => {
                 </div>
 
                 {/* Informações do Médico */}
-                {chamadaAtualFiltrada.medicoNome && (
+                {chamadaExibida.medicoNome && (
                   <div className="bg-gradient-to-r from-cyan-600 to-teal-600 rounded-xl p-6 mb-6">
                     <div className="flex items-center gap-3">
                       <Stethoscope size={32} className="text-white" />
                       <div>
                         <p className="text-cyan-100 text-sm">Consultório com</p>
                         <p className="text-white text-2xl font-bold">
-                          {chamadaAtualFiltrada.medicoNome}
+                          {chamadaExibida.medicoNome}
                         </p>
                       </div>
                     </div>
