@@ -484,7 +484,7 @@ const ConsultorioScreen = () => {
                       <div>
                         <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{pacienteAtual?.nome}</h3>
                         <p className="text-gray-500 dark:text-gray-400">
-                          CPF: {formatarCPF(pacienteAtual?.cpf)} | Prontuário: {pacienteAtual?.prontuarioId}
+                          CPF: {formatarCPF(pacienteAtual?.cpf)} | Prontuário Nº: {pacienteAtual?.numeroProntuario || '-'}
                         </p>
                         <div className="flex gap-4 mt-2 text-sm">
                           {pacienteAtual?.telefone && (
@@ -817,6 +817,7 @@ const ConsultorioScreen = () => {
                               <div class="paciente">
                                 <h3>Dados do Paciente</h3>
                                 <div class="paciente-info">
+                                  <span><strong>Prontuário:</strong> ${pacienteAtual?.numeroProntuario || '-'}</span>
                                   <span><strong>Nome Completo:</strong> ${pacienteAtual?.nome || '-'}</span>
                                   <span><strong>CPF:</strong> ${formatarCPF(pacienteAtual?.cpf) || '-'}</span>
                                   <span><strong>Data Nasc.:</strong> ${formatarData(pacienteAtual?.dataNascimento) || '-'}</span>
@@ -901,7 +902,8 @@ const ConsultorioScreen = () => {
                         {/* Dados do Paciente */}
                         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                           <h3 className="font-semibold text-gray-700 mb-2">Paciente</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
+                            <p><strong>Prontuário:</strong> {pacienteAtual?.numeroProntuario || '-'}</p>
                             <p><strong>Nome Completo:</strong> {pacienteAtual?.nome || '-'}</p>
                             <p><strong>CPF:</strong> {formatarCPF(pacienteAtual?.cpf) || '-'}</p>
                             <p><strong>Data Nasc.:</strong> {formatarData(pacienteAtual?.dataNascimento) || '-'}</p>
@@ -1021,6 +1023,7 @@ Exemplo:
                                 <div class="paciente">
                                   <h3>Paciente</h3>
                                   <div class="paciente-info">
+                                    <span><strong>Prontuário:</strong> ${pacienteAtual?.numeroProntuario || '-'}</span>
                                     <span><strong>Nome Completo:</strong> ${pacienteAtual?.nome || '-'}</span>
                                     <span><strong>CPF:</strong> ${formatarCPF(pacienteAtual?.cpf) || '-'}</span>
                                     <span><strong>Data Nasc.:</strong> ${formatarData(pacienteAtual?.dataNascimento) || '-'}</span>
